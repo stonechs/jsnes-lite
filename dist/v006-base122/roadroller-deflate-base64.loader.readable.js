@@ -1,0 +1,2 @@
+
+(async()=>{try{const binary=Uint8Array.from(atob("__BASE122_PAYLOAD__"),char=>char.charCodeAt(0));const stream=new Blob([binary]).stream().pipeThrough(new DecompressionStream("deflate-raw"));const html=await new Response(stream).text();document.open();document.write(html);document.close();}catch(error){document.body.textContent='Decode error: '+error.message;}})();

@@ -1,0 +1,25 @@
+{
+  "byteExactRoadrollerReproduction": true,
+  "oldVersionsUnchanged": {
+    "dist/v001-terser": true,
+    "dist/v002-closure-roadroller": true
+  },
+  "mapperUnitGroupsPassed": 12,
+  "cpuSmokeROMSPassed": 4,
+  "mmc3PublicTestsPassed": [
+    "1-clocking",
+    "2-details",
+    "3-A12_clocking",
+    "5-MMC3"
+  ],
+  "knownFailures": [
+    {
+      "name": "4-scanline_timing",
+      "status": 3,
+      "message": "\nScanline 0 IRQ should occur sooner when $2000=$08\n\n4-scanline_timing\n\nFailed #3\n"
+    }
+  ],
+  "optimizedCanvasHashesMatchReference": true,
+  "scriptErrors": [],
+  "networkRequests": []
+}

@@ -1,0 +1,56 @@
+const fs=require('node:fs'),path=require('node:path');
+const {pathToFileURL}=require('node:url');
+const {chromium}=require('C:/Users/maco/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+process.chdir(path.resolve(__dirname,'..'));
+const out='../dist/v005-audio-stability';
+const mode=process.argv[2]||'reference';
+const targets=mode==='reference'?['jsnes-lite.readable.html']:['closure.min.html','jsnes-lite.min.html'];
+const cases=[
+ ...[1,2,3,4].map(n=>({name:'mapper'+n,rom:`tests/roms/mapper${n}-smoke.nes`,frames:3,smoke:true})),
+ ...['croom/croom.nes','lj65/lj65.nes','mapper30/H.nes'].map(rom=>({name:rom.split('/')[0],rom:'upstream/roms/'+rom,frames:120})),
+ ...['1-clocking','2-details','3-A12_clocking','4-scanline_timing','5-MMC3'].map(n=>({name:n,rom:`references/nes-test-roms/mmc3_test_2/rom_singles/${n}.nes`,frames:360,blargg:true})),
+ {name:'MMC1_A12',rom:'references/nes-test-roms/MMC1_A12/mmc1_a12.nes',frames:120}
+];
+(async()=>{
+ const browser=await chromium.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true});
+ const results=[];
+ try{for(const target of targets){
+  const context=await browser.newContext({offline:true});const page=await context.newPage();
+  const errors=[],requests=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url())});
+  await page.goto(pathToFileURL(path.resolve(out,target)).href);await page.locator('#i_start').uncheck();
+  const roms=[];
+  for(const item of cases){
+   await page.locator('#fileInput').setInputFiles(item.rom);
+   await page.waitForFunction(()=>document.getElementById('loadStatus').textContent.includes('loaded'));
+   const result=await page.evaluate(({frames,inspect})=>{
+    // No timer loop: every candidate receives exactly the same number of frames.
+    for(let i=0;i<frames;i++)document.getElementById('b_frame').click();
+    const pixels=document.getElementById('frameCanvas').getContext('2d').getImageData(0,0,256,240).data;
+    let hash=2166136261;for(const b of pixels)hash=Math.imul(hash^b,16777619);
+    const result={hash:hash>>>0,colors:new Set(new Uint32Array(pixels.buffer)).size};
+    if(inspect){
+     result.ramStatus=memory_read(0x6000);result.irqMarker=memory_read(0x6001);
+     result.signature=[1,2,3].map(i=>memory_read(0x6000+i));
+     result.message=String.fromCharCode(...Array.from({length:1024},(_,i)=>memory_read(0x6004+i))).split('\0')[0];
+    }
+    return result;
+   },{frames:item.frames,inspect:mode==='reference'});
+   const entry={name:item.name,frames:item.frames,...result};roms.push(entry);
+   await page.screenshot({path:`${out}/${target}.${item.name}.png`});
+   console.log(JSON.stringify({file:target,...entry}));
+  }
+  results.push({file:target,artifactSHA256:require('node:crypto').createHash('sha256').update(fs.readFileSync(out+'/'+target)).digest('hex'),errors,requests,roms});await context.close();
+ }}finally{await browser.close()}
+ fs.writeFileSync(out+`/verification-${mode}.json`,JSON.stringify(results,null,2)+'\n');
+ if(results.some(r=>r.errors.length||r.requests.length))process.exitCode=1;
+ if(mode==='reference'){
+  if(results[0].roms.slice(0,4).some(r=>r.ramStatus!==0x42))process.exitCode=1;
+  for(const name of ['1-clocking','2-details','3-A12_clocking','5-MMC3']){
+   const r=results[0].roms.find(r=>r.name===name);
+   if(r.ramStatus!==0||JSON.stringify(r.signature)!=='[222,176,97]')process.exitCode=1;
+  }
+ }else{
+  const baseline=JSON.parse(fs.readFileSync(out+'/verification-reference.json','utf8'))[0];
+  for(const r of results)for(let i=0;i<r.roms.length;i++)if(r.roms[i].hash!==baseline.roms[i].hash)process.exitCode=1;
+ }
+})().catch(e=>{console.error(e);process.exitCode=1});

@@ -1,0 +1,192 @@
+[
+  {
+    "file": "jsnes-lite.readable.html",
+    "artifactSHA256": "9b73e889a2a39d6ba9a027a7b698c636a01b17131413e322c295fc3214964470",
+    "errors": [],
+    "requests": [],
+    "roms": [
+      {
+        "name": "mapper1",
+        "frames": 3,
+        "hash": 1050648005,
+        "colors": 1,
+        "ramStatus": 66,
+        "irqMarker": 0,
+        "signature": [
+          0,
+          0,
+          0
+        ],
+        "message": ""
+      },
+      {
+        "name": "mapper2",
+        "frames": 3,
+        "hash": 1050648005,
+        "colors": 1,
+        "ramStatus": 66,
+        "irqMarker": 0,
+        "signature": [
+          0,
+          0,
+          0
+        ],
+        "message": ""
+      },
+      {
+        "name": "mapper3",
+        "frames": 3,
+        "hash": 1050648005,
+        "colors": 1,
+        "ramStatus": 66,
+        "irqMarker": 0,
+        "signature": [
+          0,
+          0,
+          0
+        ],
+        "message": ""
+      },
+      {
+        "name": "mapper4",
+        "frames": 3,
+        "hash": 1050648005,
+        "colors": 1,
+        "ramStatus": 66,
+        "irqMarker": 1,
+        "signature": [
+          1,
+          0,
+          0
+        ],
+        "message": ""
+      },
+      {
+        "name": "croom",
+        "frames": 120,
+        "hash": 501643165,
+        "colors": 4,
+        "ramStatus": 0,
+        "irqMarker": 0,
+        "signature": [
+          0,
+          0,
+          0
+        ],
+        "message": ""
+      },
+      {
+        "name": "lj65",
+        "frames": 120,
+        "hash": 766882044,
+        "colors": 3,
+        "ramStatus": 0,
+        "irqMarker": 0,
+        "signature": [
+          0,
+          0,
+          0
+        ],
+        "message": ""
+      },
+      {
+        "name": "mapper30",
+        "frames": 120,
+        "hash": 3945227100,
+        "colors": 9,
+        "ramStatus": 0,
+        "irqMarker": 0,
+        "signature": [
+          0,
+          0,
+          0
+        ],
+        "message": ""
+      },
+      {
+        "name": "1-clocking",
+        "frames": 360,
+        "hash": 2369733309,
+        "colors": 2,
+        "ramStatus": 0,
+        "irqMarker": 222,
+        "signature": [
+          222,
+          176,
+          97
+        ],
+        "message": "\n1-clocking\n\nPassed\n"
+      },
+      {
+        "name": "2-details",
+        "frames": 360,
+        "hash": 367784404,
+        "colors": 2,
+        "ramStatus": 0,
+        "irqMarker": 222,
+        "signature": [
+          222,
+          176,
+          97
+        ],
+        "message": "\n2-details\n\nPassed\n"
+      },
+      {
+        "name": "3-A12_clocking",
+        "frames": 360,
+        "hash": 550253725,
+        "colors": 2,
+        "ramStatus": 0,
+        "irqMarker": 222,
+        "signature": [
+          222,
+          176,
+          97
+        ],
+        "message": "\n3-A12_clocking\n\nPassed\n"
+      },
+      {
+        "name": "4-scanline_timing",
+        "frames": 360,
+        "hash": 2617234325,
+        "colors": 2,
+        "ramStatus": 3,
+        "irqMarker": 222,
+        "signature": [
+          222,
+          176,
+          97
+        ],
+        "message": "\nScanline 0 IRQ should occur sooner when $2000=$08\n\n4-scanline_timing\n\nFailed #3\n"
+      },
+      {
+        "name": "5-MMC3",
+        "frames": 360,
+        "hash": 4265478269,
+        "colors": 2,
+        "ramStatus": 0,
+        "irqMarker": 222,
+        "signature": [
+          222,
+          176,
+          97
+        ],
+        "message": "\n5-MMC3\n\nPassed\n"
+      },
+      {
+        "name": "MMC1_A12",
+        "frames": 120,
+        "hash": 3095191998,
+        "colors": 3,
+        "ramStatus": 159,
+        "irqMarker": 0,
+        "signature": [
+          0,
+          0,
+          0
+        ],
+        "message": ""
+      }
+    ]
+  }
+]

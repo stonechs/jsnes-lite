@@ -1,0 +1,12 @@
+✔ Base122 preserves every byte and partial final groups (506.1683ms)
+✔ Roadroller bit packing preserves alphabet and padding lengths (60.8504ms)
+✔ Payload substitution preserves dollar sequences and script boundaries (1.3689ms)
+✔ Repackaged binary restores the exact released v005 Roadroller program (6.0119ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 725.2539

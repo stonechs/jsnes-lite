@@ -1,0 +1,26 @@
+const fs=require('node:fs'),path=require('node:path');
+const {pathToFileURL}=require('node:url');
+const {chromium}=require('C:/Users/maco/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+process.chdir(path.resolve(__dirname,'..'));
+const out='dist/v005-audio-stability';
+(async()=>{
+ const browser=await chromium.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true});const results=[];
+ try{for(const file of ['jsnes-lite.readable.html','jsnes-lite.min.html'])for(const open of [false,true]){
+  const context=await browser.newContext({offline:true});const page=await context.newPage();const errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(pathToFileURL(path.resolve(out,file)).href);await page.locator('#i_start').uncheck();
+  await page.evaluate(open=>{document.getElementById('p_debug').open=open},open);
+  await page.locator('#fileInput').setInputFiles(process.env.FIELD_COMBAT_ROM||'upstream/roms/croom/croom.nes');
+  await page.waitForFunction(()=>document.getElementById('loadStatus').textContent.includes('loaded'));
+  const images=await page.evaluate(()=>{
+   for(let i=0;i<120;i++)document.getElementById('b_frame').click();
+   const hash=data=>{let h=2166136261;for(const b of data)h=Math.imul(h^b,16777619);return h>>>0};
+   const frame=document.getElementById('frameCanvas'),vram=document.getElementById('vramCanvas');
+   const image=vram.getContext('2d').getImageData(0,0,vram.width,vram.height).data;
+   return{frame:hash(frame.getContext('2d').getImageData(0,0,256,240).data),vramNonzero:image.some(v=>v!==0)};
+  });
+  results.push({file,open,errors,...images});console.log(results.at(-1));await context.close();
+ }}finally{await browser.close()}
+ fs.writeFileSync(out+'/verification-vram.json',JSON.stringify(results,null,2)+'\n');
+ if(results.some(r=>r.errors.length||r.vramNonzero!==r.open||r.frame!==results[0].frame))process.exitCode=1;
+})().catch(e=>{console.error(e);process.exitCode=1});

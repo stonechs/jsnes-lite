@@ -1,0 +1,18 @@
+{
+  "commit": "923d45e04483b7655dbdd91773f74de46c38c661",
+  "terser": "5.51.2",
+  "romIncluded": false,
+  "sourceBytes": 94865,
+  "files": {
+    "jsnes-lite-standalone.html": {
+      "bytes": 96083,
+      "KiB": 93.8310546875,
+      "gzipBytes": 23937
+    },
+    "jsnes-lite-standalone.min.html": {
+      "bytes": 15501,
+      "KiB": 15.1376953125,
+      "gzipBytes": 5784
+    }
+  }
+}

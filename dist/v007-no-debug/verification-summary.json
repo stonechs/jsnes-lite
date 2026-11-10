@@ -1,0 +1,22 @@
+{
+  "oldVersionsUnchanged": {
+    "v001-terser": true,
+    "v002-closure-roadroller": true,
+    "v003-mappers-1-4": true,
+    "v004-audioworklet": true,
+    "v005-audio-stability": true,
+    "v006-base122": true
+  },
+  "unitPassed": true,
+  "browserArtifactsValid": true,
+  "playerAudioPassed": true,
+  "sizeHashesValid": true,
+  "diagnosticsRemoved": true,
+  "sourceAPUUnchanged": true,
+  "sourceCPUUnchanged": true,
+  "referencePlayerUnchanged": true,
+  "finalHTMLBytes": 11500,
+  "knownLimitations": [
+    "Original mapper 30 incomplete; MMC3 precise scanline timing test still fails."
+  ]
+}

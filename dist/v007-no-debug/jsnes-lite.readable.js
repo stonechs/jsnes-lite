@@ -1,0 +1,4259 @@
+document.open();document.write("<!doctype html><meta charset=utf-8><meta name=viewport content=\"width=device-width,initial-scale=1\"><title>JSNES lite</title>\n<h3>JSNES lite</h3><canvas id=frameCanvas width=256 height=240></canvas>\n<p><input type=file id=fileInput accept=.nes></p>\n<p><button id=b_play>Play</button> <button id=b_pause>Pause</button> <button id=b_reset>Reset</button> <button id=b_audio>Enable audio</button> <label><input type=checkbox id=i_audio checked>Sound</label></p>\n<p id=loadStatus role=status>Select a local ROM.</p><p id=audioStatus role=status></p>\n<p>Arrow keys: move; X: A; C: B; Enter: Start; Esc: Select.</p>\n<style>body{font:14px Arial;background:#888}canvas{background:#000;image-rendering:pixelated;max-width:100%}</style>");document.close();
+var B,O,i,joy1Read,joy1StrobeState,joy2Read,joy2StrobeState,joypadLastWrite,memory_read,memory_write,totalCycles,x;
+var audio_worklet_source=String.raw`// JSNES-style PCM buffering with low-water feedback, bounded queue and gap fades.
+// All work here runs on the independent AudioWorklet rendering thread.
+class LiteNESAudioProcessor extends AudioWorkletProcessor {
+  constructor(){
+    super();
+    this.capacity=8192;
+    this.left=new Float32Array(this.capacity);this.right=new Float32Array(this.capacity);
+    this.read=0;this.write=0;this.count=0;
+    this.playing=false;this.primed=false;this.gain=0.7;this.stream=0;
+    this.low=Math.min(4096,Math.ceil(sampleRate*.064/128)*128);
+    this.target=Math.min(6144,Math.ceil(sampleRate*.085/128)*128);
+    this.pending=false;this.fade=0;this.lastL=0;this.lastR=0;
+    this.port.onmessage=event=>{
+      const message=event.data;
+      if(message[0]===0){
+        if(!this.playing||(message[3]!==undefined&&message[3]!==this.stream))return;
+        const left=message[1],right=message[2];
+        for(let i=0;i<Math.min(left.length,right.length);i++){
+          if(this.count===this.capacity){this.read=(this.read+1)%this.capacity;this.count--;}
+          this.left[this.write]=left[i];this.right[this.write]=right[i];
+          this.write=(this.write+1)%this.capacity;this.count++;
+        }
+      }else if(message[0]===1){
+        this.playing=!!message[1];this.stream=message[2]||0;
+        this.read=this.write=this.count=0;this.primed=false;this.pending=false;this.fade=0;
+      }else if(message[0]===2){
+        this.gain=Math.max(0,Math.min(1,Number(message[1])||0));
+      }else if(message[0]===5&&message[1]===this.stream){
+        this.pending=false;
+      }
+    };
+  }
+  needSamples(){
+    if(!this.pending&&this.playing&&this.count<(this.primed?this.low:this.target)){
+      this.pending=true;
+      this.port.postMessage([4,this.stream,this.count]);
+    }
+  }
+  fadeTail(left,right,start){
+    const length=Math.min(32,left.length-start);
+    for(let i=0;i<length;i++){
+      const gain=1-(i+1)/length;
+      left[start+i]=this.lastL*gain;right[start+i]=this.lastR*gain;
+    }
+    this.lastL=this.lastR=0;
+  }
+  process(inputs,outputs){
+    const output=outputs[0];if(!output||output.length<2)return true;
+    const left=output[0],right=output[1];left.fill(0);right.fill(0);
+    if(!this.playing){this.fadeTail(left,right,0);return true;}
+    this.needSamples();
+    if(!this.primed){
+      if(this.count<this.target){this.fadeTail(left,right,0);return true;}
+      this.primed=true;this.fade=32;
+    }
+    const length=Math.min(left.length,this.count);
+    for(let i=0;i<length;i++){
+      const fade=this.fade?(33-this.fade--)/32:1;
+      left[i]=this.left[this.read]*this.gain*fade;
+      right[i]=this.right[this.read]*this.gain*fade;
+      this.read=(this.read+1)%this.capacity;
+    }
+    this.count-=length;
+    if(length){this.lastL=left[length-1];this.lastR=right[length-1];}
+    if(length<left.length){this.primed=false;this.fadeTail(left,right,length);}
+    this.needSamples();
+    return true;
+  }
+}
+registerProcessor('lite-nes-audio',LiteNESAudioProcessor);
+`;
+// Jsnes-lite API
+// ==============
+
+// This file exposes six functions that help handle the inputs and outputs of the emulator:
+// - NES.start({rom, save, frame, audio})
+// - NES.reset()
+// - NES.frame()
+// - NES.buttonDown(controller, button)
+// - NES.buttonUp(controller, button)
+var NES = {
+  
+  // Emulator globals
+  loop: null,
+  fps: 60.098,
+  frameTime: 1000 / 60.098,
+  nextFrameAt: 0,
+  cpu_cycles: 0,
+  
+  // ROM globals
+  mapper: 0,
+  mirroring: 0,
+  prg: [],
+  chr: [],
+  
+  // Graphics globals
+  frameCtx: null,
+  frameData: null,
+  frameBuffer: null,
+  frameBuffer8: null,
+  frameBuffer32: null,
+  
+  // Audio globals
+  leftSamples: [],
+  rightSamples: [],
+  currentSample: 0,
+  sampleRate: 44100,
+  cyclesToHalt: 0,
+  
+  // Controllers globals
+  controllers: null,
+  
+  // Mapper globals
+  prg_0_bank: 0,
+  prg_1_bank: 1,
+  chr_bank: 0,
+  mirroring_backup: 0,
+  
+  // Init the emulator with the rom (binary string), optional save file, and the display canvas
+  init: ({rom, save, frame}) => {
+
+    // Reset emulator
+    NES.reset();
+    
+    // Parse ROM
+    NES.parse(rom);
+    
+    // Load ROM's content in memory according to current mapper
+    NES.load();
+    
+    // Init display
+    NES.frameCtx = frame.getContext("2d");
+    NES.frameData = NES.frameCtx.getImageData(0, 0, 256, 240);
+    NES.frameBuffer = new ArrayBuffer(256 * 240 * 4);
+    NES.frameBuffer8 = new Uint8Array(NES.frameBuffer);
+    NES.frameBuffer32 = new Uint32Array(NES.frameBuffer);
+// Init controllers
+    NES.controllers = {
+      1: new Controller(),
+      2: new Controller()
+    };
+    
+  },
+  
+  // Play
+  play: () => {
+    NES.pause();
+    audio_set_playing(true);
+    audio_resume();
+    // A deadline clock avoids setInterval's integer-ms drift and the resulting
+    // gradual audio queue overflow. 60.098 matches NTSC and latest JSNES.
+    NES.nextFrameAt = performance.now();
+    NES.loop = setTimeout(NES.next_frame, 0);
+  },
+
+  next_frame: () => {
+    if(NES.loop === null)return;
+    NES.frame();
+    NES.nextFrameAt += NES.frameTime;
+    var now = performance.now();
+    if(now - NES.nextFrameAt > 3 * NES.frameTime) NES.nextFrameAt = now;
+    NES.loop = setTimeout(NES.next_frame, Math.max(0, NES.nextFrameAt - now));
+  },
+  
+  // Pause
+  pause: () => {
+    clearTimeout(NES.loop);
+    NES.loop = null;
+    audio_set_playing(false);
+  },
+
+  // Reset
+  reset: () => {
+    
+    // Stop 60 fps loop (if any)
+    NES.pause();
+    
+    // Reset CPU, PPU, APU
+    cpu_reset();
+    ppu_reset();
+    apu_reset();
+    // Soft reset restores cartridge registers while preserving its PRG-RAM.
+    if(NES.prg.length) mapper_reset();
+    
+    // Send reset interrupt to the CPU
+    interrupt_requested = 2;
+    
+    NES.cyclesToHalt = 0;
+    
+    //NES.cpu_cycles = 0;
+  },
+
+  // Render a new frame
+  frame: () => {
+    
+    var cycles;
+    totalCycles = 0;
+    endFrame = 0;
+    
+    // Repeatedly execute CPU instructions until the frame is fully rendered
+    while(!endFrame){
+      if(apu_stalls){
+        cycles = Math.min(apu_stalls, 8);
+        apu_stalls -= cycles;
+      } else {
+        cycles = emulate();
+      }
+      apu_clock(cycles);
+
+      for (i = cycles; i--;) {
+        cpu_tick();
+      }
+    }
+    audio_flush();
+  },
+  
+  keydown: (controller, button) => {
+    NES.controllers[controller].keydown(button);
+  },
+
+  keyup: (controller, button) => {
+    NES.controllers[controller].keyup(button);
+  },
+  
+  //haltCycles: (cycles) => {
+  //  NES.cyclesToHalt += cycles;
+  //}
+}
+
+;
+// iNES 1.0 loader. NES 2.0/submappers are explicitly rejected.
+NES.parse=data=>{
+  if(data.length<16||data[0]!==78||data[1]!==69||data[2]!==83||data[3]!==26||!data[4])throw new Error('Invalid iNES ROM');
+  if((data[7]&12)===8)throw new Error('NES 2.0 is not supported');
+  var offset=16+((data[6]&4)?512:0);
+  if(data.length<offset+data[4]*16384+data[5]*8192)throw new Error('Truncated ROM');
+  NES.mapper=(data[6]>>4)|(data[7]&240);
+  NES.fourScreen=!!(data[6]&8);
+  NES.headerMirroring=NES.mirroring=NES.fourScreen?2:(data[6]&1)?0:1;
+  NES.chrRAM=data[5]===0;
+  NES.prg=[];
+  for(var bank=0;bank<data[4];bank++){
+    NES.prg.push(data.slice(offset,offset+16384));offset+=16384;
+  }
+  NES.chr=[];
+  for(bank=0;bank<data[5];bank++){
+    NES.chr.push(data.slice(offset,offset+8192));offset+=8192;
+  }
+  if(NES.chrRAM)for(bank=0;bank<(NES.mapper===30?4:1);bank++)NES.chr.push(new Uint8Array(8192));
+};
+
+;
+// CPU
+// ===
+
+// Resources:
+// - https://wiki.nesdev.com/w/index.php/CPU_unofficial_opcodes
+// - https://wiki.nesdev.com/w/index.php/Status_flags
+// - http://wiki.nesdev.com/w/index.php/CPU_interrupts
+// - https://wiki.nesdev.com/w/index.php/Stack
+// - https://www.masswerk.at/6502/6502_instruction_set.html
+// - https://problemkaputt.de/everynes.htm#cpu65xxmicroprocessor
+// - https://www.npmjs.com/package/dict-tempering
+// - http://www.6502.org/tutorials/vflag.html
+// - https://retrocomputing.stackexchange.com/questions/145
+// - http://forum.6502.org/viewtopic.php?f=8&t=6370
+
+var
+cpu_mem,
+interrupt_requested,
+clk = 0,
+
+// Reset the CPU
+cpu_reset = () => {
+    
+  // CPU internal memory (64KB)
+  cpu_mem = [];
+  clk = 0;
+},
+
+// Clock 1 CPU cycle
+// During this time, 3 PPU cycles and 1 APU cycle take place
+cpu_tick = () => {
+  clk++;
+  ppu_tick();
+  ppu_tick();
+  ppu_tick();
+  //apu_tick();
+},
+
+// Emulates a single CPU instruction or interrupt, returns the number of cycles
+emulate = () => {
+
+  // Execute the requested interrupt, if any
+  if(interrupt_requested){
+    
+    // 1: NMI
+    // 2: Reset
+    // 3: IRQ
+    op(interrupt_requested);
+    
+    // Reset interrupt requested flag
+    interrupt_requested = 0;
+  }
+
+  // Or execute next instruction
+  else if((mapper_irq || apu_irq_pending()) && !I) {
+    // Cartridge IRQ is level-sensitive; polling must not discard a masked IRQ.
+    op(3);
+  }
+  else {
+    op();
+  }
+  
+  // Return the number of cycles spent
+  return c;
+}
+
+;
+// Memory manager
+// ==============
+
+// This file handles the CPU's memory accesses
+// It assumes that the memory has been initialized (see CPU_reset())
+// Reading and writing at specific addresses makes the CPU able to communicate with other parts of the emulator (PPU, APU, controllers, mapper)
+
+// Resources:
+// - https://problemkaputt.de/everynes.htm#memorymaps
+// - https://problemkaputt.de/everynes.htm#iomap
+// - https://wiki.nesdev.com/w/index.php/cpu_memory_map
+
+//  CPU memory map (64KB):
+
+//  +-------------+-------+-------------------------------------------------------+
+//  | Address     | Size  | Use                                                   |
+//  +-------------+-------+-------------------------------------------------------+
+//  | $0000-$07FF | 2KB   | 2KB internal RAM:                                     |
+//  | $0000-$00FF | 256B  | - Zero page                                           |
+//  | $0100-$01FF | 256B  | - Stack                                               |
+//  | $0200-$07FF | 1.5KB | - General purpose                                     |
+//  +- - - - - - -+- - - -+- - - - - - - - - - - - - - - - - - - - - - - - - - - -+
+//  | $0800-$0FFF | 2KB   | Mirror of $0000-$07FF                                 |
+//  | $1000-$17FF | 2KB   | Mirror of $0000-$07FF                                 |
+//  | $1800-$1FFF | 2KB   | Mirror of $0000-$07FF                                 |
+//  +-------------+-------+-------------------------------------------------------+
+//  | $2000-$2007 | 8B    | PPU I/O registers:                                    |
+//  | 2000        | 1B    | PPU Control Register 1                   (Write-only) |
+//  | 2001        | 1B    | PPU Control Register 2                   (Write-only) |
+//  | 2002        | 1B    | PPU Status Register                       (Read-only) |
+//  | 2003        | 1B    | SPR-RAM Address Register                 (Write-only) |
+//  | 2004        | 1B    | SPR-RAM Data Register                    (Read/write) |
+//  | 2005        | 1B    | PPU Background Scrolling Offset   (Write-only, twice) |
+//  | 2006        | 1B    | VRAM Address Register             (Write-only, twice) |
+//  | 2007        | 1B    | VRAM Read/Write Data Register            (Read/write) |
+//  +- - - - - - -+- - - -+- - - - - - - - - - - - - - - - - - - - - - - - - - - -+
+//  | $2008-$3FFF | 8184B | Mirrors of $2000-$2007 (every 8 bytes)                |
+//  +-------------+-------+-------------------------------------------------------+
+//  | $4000-$4017 | 24B   | APU I/O registers:                                    |
+//  | 4000        | 1B    | APU Channel 1 (Rectangle) Volume/Decay        (Write) |
+//  | 4001        | 1B    | APU Channel 1 (Rectangle) Sweep               (Write) |
+//  | 4002        | 1B    | APU Channel 1 (Rectangle) Frequency           (Write) |
+//  | 4003        | 1B    | APU Channel 1 (Rectangle) Length              (Write) |
+//  | 4004        | 1B    | APU Channel 2 (Rectangle) Volume/Decay        (Write) |
+//  | 4005        | 1B    | APU Channel 2 (Rectangle) Sweep               (Write) |
+//  | 4006        | 1B    | APU Channel 2 (Rectangle) Frequency           (Write) |
+//  | 4007        | 1B    | APU Channel 2 (Rectangle) Length              (Write) |
+//  | 4008        | 1B    | APU Channel 3 (Triangle) Linear Counter       (Write) |
+//  | 4009        | 1B    | N/A                                                   |
+//  | 400A        | 1B    | APU Channel 3 (Triangle) Frequency            (Write) |
+//  | 400B        | 1B    | APU Channel 3 (Triangle) Length               (Write) |
+//  | 400C        | 1B    | APU Channel 4 (Noise) Volume/Decay            (Write) |
+//  | 400D        | 1B    | N/A                                                   |
+//  | 400E        | 1B    | APU Channel 4 (Noise) Frequency               (Write) |
+//  | 400F        | 1B    | APU Channel 4 (Noise) Length                  (Write) |
+//  | 4010        | 1B    | APU Channel 5 (DMC) Play mode & DMA frequency (Write) |
+//  | 4011        | 1B    | APU Channel 5 (DMC) Delta counter load        (Write) |
+//  | 4012        | 1B    | APU Channel 5 (DMC) Address load              (Write) |
+//  | 4013        | 1B    | APU Channel 5 (DMC) Length                    (Write) |
+//  +- - - - - - -+- - - -+- - - - - - - - - - - - - - - - - - - - - - - - - - - -+
+//  | 4014        | 1B    | SPR-RAM DMA Register                          (Write) |
+//  +- - - - - - -+- - - -+- - - - - - - - - - - - - - - - - - - - - - - - - - - -+
+//  | 4015        | 1B    | DMC/IRQ/length status/channel enable     (Read/write) |
+//  +- - - - - - -+- - - -+- - - - - - - - - - - - - - - - - - - - - - - - - - - -+
+//  | 4016        | 1B    | Joypad #1                                (Read/write) |
+//  | 4017        | 1B    | Joypad #2 / APU SOFTCLK                  (Read/write) |
+//  +- - - - - - -+- - - -+- - - - - - - - - - - - - - - - - - - - - - - - - - - -+
+//  | $4018-$401F | 8B    | APU I/O test registers (disabled)                     |
+//  +-------------+-------+-------------------------------------------------------+
+//  | $4020-$FFFF | 48KB  | Cartridge space:                                      |
+//  | $4020-$5FFF | 8160B | - Expansion ROM (some mappers add extra ROM/RAM here) |
+//  | $6000-$7FFF | 8KB   | - PRG-RAM (if any)                                    |
+//  | $7000-$71FF | 512B  | - trainer (if any)                                    |
+//  | $8000-$BFFF | 16KB  | - PRG-ROM low page                                    |
+//  | $C000-$FFFF | 16KB  | - PRG-ROM high page, including:                       |
+//  | $FFFA-$FFFB | 2B    |   * NMI vector                                        |
+//  | $FFFC-$FFFD | 2B    |   * Reset vector                                      |
+//  | $FFFE-$FFFF | 2B    |   * IRQ/BRK vector                                    |
+//  +-------------+-------+-------------------------------------------------------+
+
+
+// Read a 8-byte value in memory
+memory_read = address => {
+  
+  // Wrap around ($0000-$FFFF)
+  address &= 0xFFFF;
+  
+  // Handle RAM mirrors ($0000-$07FF + $0800-$1FFF)
+  if(address < 0x2000) address &= 0x7FF;
+  
+  // PPU registers ($2000-$2007) + mirrors ($2008-$3FFF)
+  else if(address < 0x4000){
+    
+    // Mirroring
+    address &= 0x2007;
+
+    // $2002: PPU Status Register
+    if(address == 0x2002) return get_PPUSTATUS(); 
+
+    // $2004: Sprite Memory read
+    else if(address == 0x2004) return get_OAMDATA(); 
+    
+    // $2007: VRAM read
+    else if(address == 0x2007) return get_PPUDATA(); 
+  }
+  
+  // Sound and I/O registers ($4000-$401F)
+  else if(address < 0x4020){
+    
+    // $4015: Sound channel enable, DMC Status
+    if(address == 0x4015){
+      return apu_read();
+    }
+
+    // $4016: Joystick 1 + Strobe
+    else if(address == 0x4016) return joy1Read();
+
+    // $4017: Joystick 2 + Strobe
+    else if(address == 0x4017) return joy2Read();
+  }
+  
+  // PRG-ROM
+  else if(address >= 0x8000) return mapper_prg_read(address);
+  else if(address >= 0x6000) return mapper_ram_enabled ? mapper_ram[address - 0x6000] : 0;
+  
+  // Simply read in memory
+  return cpu_mem[address] || 0;
+},
+
+// Write a 8-bit value in memory
+memory_write = (address, value) => {
+  
+  // Wrap around ($0000-$FFFF)
+  address &= 0xFFFF;
+  
+  // Handle RAM mirrors ($0000-$07FF + $0800-$1FFF)
+  if(address < 0x2000) address &= 0x7FF;
+  
+  // PPU registers ($2000-$2007) + mirrors ($2008-$3FFF)
+  else if(address < 0x4000){
+    
+    address &= 0x2007;
+    
+    // $2000: PPU Control register 1 (write-only)
+    if(address == 0x2000) set_PPUCTRL(value);
+
+    // $2001: PPU Control register 2 (write-only)
+    else if(address == 0x2001) set_PPUMASK(value);
+
+    // $2003: Set Sprite RAM address (write-only)
+    else if(address == 0x2003) set_OAMADDR(value);
+
+    // $2004: Write to Sprite RAM
+    else if(address == 0x2004) set_OAMDATA(value);
+
+    // $2005: Screen Scroll offsets (write-only)
+    else if(address == 0x2005) set_PPUSCROLL(value);
+
+    // $2006: Set VRAM address (write-only)
+    else if(address == 0x2006) set_PPUADDR(value);
+
+    // $2007: Write to VRAM
+    else if(address == 0x2007) set_PPUDATA(value);
+  }
+  
+  // APU registers, including all five channels and DMC DMA.
+  else if(address < 0x4014) apu_write(address, value);
+
+  // I/O registers ($4014-$401F)
+  else if(address < 0x4020){
+    
+    // $4014: Sprite Memory DMA Access
+    if(address == 0x4014) set_OAMDMA(value);
+
+    // $4015: Sound Channel Switch, DMC Status
+    else if(address == 0x4015) {
+      apu_write(0x4015, value);
+    }
+
+    // $4016: Joystick 1 + Strobe
+    else if(address == 0x4016){
+      if((value & 1) === 0 && (joypadLastWrite & 1) === 1){
+        joy1StrobeState = 0;
+        joy2StrobeState = 0;
+      }
+      joypadLastWrite = value;
+    }
+
+    // $4017: Sound channel frame sequencer:
+    else if(address == 0x4017){
+      apu_write(0x4017, value);
+    }
+  }
+
+  // Write to persistent RAM (save slot)
+  else if(address >= 0x6000 && address < 0x8000) {
+    if(mapper_ram_enabled && !mapper_ram_protect) mapper_ram[address - 0x6000] = value;
+    return;
+  }
+  
+  // Simply write in memory, if not in PRG-ROM (necessary?)
+  if(address < 0x8000){
+    cpu_mem[address] = value;
+  }
+  
+  // Inform the Mapper that a write has been made in memory
+  mapper_write(address, value);
+}
+
+;
+// Cartridge adapters, adapted to jsnes-lite from JSNES 2.1.0 (Apache-2.0).
+// Reference commit: b8a45d088e922b6abcd87c4eb1b7237919e9d3d2.
+// PRG pages: 8 KiB; CHR pages: 1 KiB. Tables also support banked CHR-RAM.
+var mapper_prg=[],mapper_chr=[],mapper_ram,mapper_irq=0,
+    mapper_ram_enabled=1,mapper_ram_protect=0,
+    mmc1_shift=16,mmc1_control=12,mmc1_chr0=0,mmc1_chr1=0,
+    mmc1_prg=0,mmc1_last_write=-2,
+    mmc3_select=0,mmc3_registers=[],mmc3_counter=0,mmc3_latch=0,
+    mmc3_reload=0,mmc3_enabled=0,mmc3_a12=0,mmc3_low_since=0;
+
+// Map consecutive pages, wrapping within the actual cartridge size.
+var mapper_map_prg=(slot,bank,count)=>{
+  for(var index=0;index<count;index++) mapper_prg[slot+index]=(bank+index)%(NES.prg.length*2);
+};
+var mapper_map_chr=(slot,bank,count)=>{
+  for(var index=0;index<count;index++) mapper_chr[slot+index]=(bank+index)%(NES.chr.length*8);
+};
+var mapper_prg_read=address=>{
+  var bank=mapper_prg[(address-0x8000)>>13];
+  return NES.prg[bank>>1][((bank&1)<<13)|(address&0x1fff)];
+};
+var mapper_chr_read=address=>{
+  var bank=mapper_chr[address>>10];
+  return NES.chr[bank>>3][((bank&7)<<10)|(address&1023)];
+};
+var mapper_chr_write=(address,value)=>{
+  if(NES.chrRAM){
+    var bank=mapper_chr[address>>10];
+    NES.chr[bank>>3][((bank&7)<<10)|(address&1023)]=value;
+  }
+};
+
+// MMC1: 32/16 KiB PRG, 8/4 KiB CHR and both single-screen nametable pages.
+// SUROM: CHR0 bit 4 selects the upper 256 KiB on a 512 KiB CHR-RAM cart.
+var mmc1_sync=()=>{
+  NES.mirroring=[3,4,0,1][mmc1_control&3];
+  mapper_ram_enabled=!(mmc1_prg&16);
+  var outer=NES.chrRAM&&NES.prg.length>16?mmc1_chr0&16:0;
+  var last=Math.min(15,NES.prg.length-1),mode=(mmc1_control>>2)&3;
+  if(mode<2) mapper_map_prg(0,(outer|(mmc1_prg&14))*2,4);
+  else if(mode===2){
+    mapper_map_prg(0,outer*2,2);
+    mapper_map_prg(2,(outer|(mmc1_prg&15))*2,2);
+  }else{
+    mapper_map_prg(0,(outer|(mmc1_prg&15))*2,2);
+    mapper_map_prg(2,(outer|last)*2,2);
+  }
+  if(mmc1_control&16){
+    mapper_map_chr(0,mmc1_chr0*4,4);
+    mapper_map_chr(4,mmc1_chr1*4,4);
+  }else mapper_map_chr(0,(mmc1_chr0&30)*4,8);
+};
+
+// MMC3: two 2 KiB CHR pairs, four 1 KiB CHR pages, two switchable PRG pages.
+// Mode changes immediately remap all registers, even before another data write.
+var mmc3_sync=()=>{
+  var registers=mmc3_registers,swap=(mmc3_select&128)?4:0;
+  mapper_map_chr(swap,registers[0]&254,2);
+  mapper_map_chr(swap+2,registers[1]&254,2);
+  for(var index=0;index<4;index++) mapper_map_chr((swap^4)+index,registers[index+2],1);
+  var fixed=NES.prg.length*2-2;
+  mapper_map_prg(0,(mmc3_select&64)?fixed:registers[6]&63,1);
+  mapper_map_prg(1,registers[7]&63,1);
+  mapper_map_prg(2,(mmc3_select&64)?registers[6]&63:fixed,1);
+  mapper_map_prg(3,fixed+1,1);
+};
+
+// MMC3B/C reload/decrement semantics. IRQ stays asserted until $E000 ack.
+var mapper_clock_irq=()=>{
+  if(NES.mapper!==4)return;
+  if(mmc3_counter===0||mmc3_reload)mmc3_counter=mmc3_latch;
+  else mmc3_counter--;
+  mmc3_reload=0;
+  if(mmc3_counter===0&&mmc3_enabled)mapper_irq=1;
+};
+// Observe CPU-driven PPUADDR/PPUDATA edges, NOT debug renderer CHR reads.
+// A12 must remain low for >=8 PPU clocks before a rising edge qualifies.
+var mapper_ppu_address=address=>{
+  if(NES.mapper!==4)return;
+  var high=(address>>12)&1,time=(clk+c)*3;
+  if(!high&&mmc3_a12)mmc3_low_since=time;
+  if(high&&!mmc3_a12&&time-mmc3_low_since>=8)mapper_clock_irq();
+  mmc3_a12=high;
+};
+// Like JSNES, clock once per rendered scanline. This core does not have a
+// dot-exact PPU fetch pipeline; special A12/rendering timings remain approximate.
+var mapper_scanline=()=>{
+  if(NES.mapper===4&&(PPUMASK_b||PPUMASK_s))mapper_clock_irq();
+};
+var mapper_reset=()=>{
+  mapper_irq=mmc3_counter=mmc3_latch=mmc3_reload=mmc3_enabled=0;
+  mmc3_a12=mmc3_low_since=0;
+  mapper_ram_enabled=1;mapper_ram_protect=0;
+  NES.mirroring=NES.headerMirroring;
+  mapper_map_prg(0,0,4);
+  if(NES.mapper!==0&&NES.mapper!==3)mapper_map_prg(2,NES.prg.length*2-2,2);
+  mapper_map_chr(0,0,8);
+  if(NES.mapper===1){
+    mmc1_shift=16;mmc1_control=12;
+    mmc1_chr0=mmc1_chr1=mmc1_prg=0;mmc1_last_write=-2;mmc1_sync();
+  }else if(NES.mapper===4){
+    mmc3_select=0;mmc3_registers=[0,2,4,5,6,7,0,1];mmc3_sync();
+  }
+};
+NES.load=()=>{
+  if(![0,1,2,3,4,30].includes(NES.mapper))throw new Error('Unsupported mapper: '+NES.mapper);
+  mapper_ram=new Uint8Array(8192);
+  mapper_reset();
+};
+var mapper_write=(address,value)=>{
+  if(address<0x8000)return;
+  value&=255;
+  if(NES.mapper===1){
+    // Consecutive-cycle serial writes after the first are ignored (CPU RMW).
+    var cycle=clk+c,previous=mmc1_last_write;
+    mmc1_last_write=cycle;
+    if(cycle===previous+1)return;
+    if(value&128){mmc1_shift=16;mmc1_control|=12;mmc1_sync();return}
+    var complete=mmc1_shift&1;
+    mmc1_shift=(mmc1_shift>>1)|((value&1)<<4);
+    if(complete){
+      switch((address>>13)&3){
+        case 0:mmc1_control=mmc1_shift;break;
+        case 1:mmc1_chr0=mmc1_shift;break;
+        case 2:mmc1_chr1=mmc1_shift;break;
+        case 3:mmc1_prg=mmc1_shift;break;
+      }
+      mmc1_shift=16;mmc1_sync();
+    }
+  }else if(NES.mapper===2)mapper_map_prg(0,value*2,2);
+  else if(NES.mapper===3)mapper_map_chr(0,value*8,8);
+  else if(NES.mapper===4){
+    switch(address&0xe001){
+      case 0x8000:mmc3_select=value;mmc3_sync();break;
+      case 0x8001:mmc3_registers[mmc3_select&7]=value;mmc3_sync();break;
+      case 0xa000:if(!NES.fourScreen)NES.mirroring=value&1;break;
+      case 0xa001:mapper_ram_enabled=(value>>7)&1;mapper_ram_protect=(value>>6)&1;break;
+      case 0xc000:mmc3_latch=value;break;
+      case 0xc001:mmc3_counter=0;mmc3_reload=1;break;
+      case 0xe000:mmc3_enabled=mapper_irq=0;break;
+      case 0xe001:mmc3_enabled=1;break;
+    }
+  }else if(NES.mapper===30&&address>=0xc000){
+    mapper_map_prg(0,(value&31)*2,2);
+    mapper_map_chr(0,((value>>5)&3)*8,8);
+    NES.mirroring=(value&128)?3:NES.headerMirroring;
+  }
+};
+
+;
+var Controller = function(){
+  this.state = new Array(8);
+  for(var i = 0; i < this.state.length; i++){
+    this.state[i] = 0x40;
+  }
+};
+
+joy1StrobeState = 0
+joy2StrobeState = 0
+
+Controller.BUTTON_A = 0;
+Controller.BUTTON_B = 1;
+Controller.BUTTON_SELECT = 2;
+Controller.BUTTON_START = 3;
+Controller.BUTTON_UP = 4;
+Controller.BUTTON_DOWN = 5;
+Controller.BUTTON_LEFT = 6;
+Controller.BUTTON_RIGHT = 7;
+
+Controller.prototype = {
+  keydown: function(key){
+    this.state[key] = 0x41;
+  },
+
+  keyup: function(key){
+    this.state[key] = 0x40;
+  }
+};
+
+
+joy1Read = function(){
+  var ret;
+
+  switch (joy1StrobeState){
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+      ret = NES.controllers[1].state[joy1StrobeState];
+      break;
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+    case 17:
+    case 18:
+      ret = 0;
+      break;
+    case 19:
+      ret = 1;
+      break;
+    default:
+      ret = 0;
+  }
+
+  joy1StrobeState++;
+  if(joy1StrobeState === 24){
+    joy1StrobeState = 0;
+  }
+
+  return ret;
+},
+
+joy2Read = function(){
+  var ret;
+
+  switch (joy2StrobeState){
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+      ret = NES.controllers[2].state[joy2StrobeState];
+      break;
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+    case 17:
+    case 18:
+      ret = 0;
+      break;
+    case 19:
+      ret = 1;
+      break;
+    default:
+      ret = 0;
+  }
+
+  joy2StrobeState++;
+  if(joy2StrobeState === 24){
+    joy2StrobeState = 0;
+  }
+
+  return ret;
+}
+;
+// mini 6502 CPU simulator
+// =======================
+
+// Globals
+// -------
+
+// Registers
+A =           // accumulator
+X =           // X
+Y =           // Y
+S = 0,        // stack pointer (also called SP)
+PC = 0x8000,  // program counter (address of next instruction)
+P = 0x24,     // status register (flags on bytes 0-7: C=0, Z=0, I=1, D=0, B=0, 1, V=0, N=0)
+
+// Other globals
+t =          // temp var
+o =          // opcode value
+a =          // operand address
+p =          // operand value
+c = 0,       // cycle counter
+
+// Helpers
+// -------
+
+// Read/write a byte in memory. Costs 1 cycle
+// These functions handle mirrors, persistent save slots, and Mapper-specific features like bank switches
+r = v => (c++, cpu_bus_read(v)),
+w = (v, w) => (c++, apu_bus=w, memory_write(v, w)),
+
+// Update N and Z status flags:
+// - The value v is clamped on 8 bits and returned
+// - The Zero flag (bit 1 of P) is set if v is zero, otherwise it's cleared
+// - The Negative flag (bit 7 of P) is set if byte 7 of v is 1, otherwise it's cleared
+F = v => (
+  Z = (v &= 255) < 1,
+  N = v >> 7,
+  v
+),
+
+// Update the flags values according to the status register P
+f = v => (
+  C = v & 1,
+  Z = (v>>1) & 1,
+  I = (v>>2) & 1,
+  D = (v>>3) & 1,
+  B = (v>>4) & 1,
+  V = (v>>6) & 1,
+  N = v>>7
+),
+
+// Set all flags on load
+f(P = 0x24),
+
+// Push on Stack
+// Write at address $100 + S, decrement S, wrap it between $00 and $FF
+h = v => (
+  w(256 + S--, v),
+  S &= 255
+),
+
+// Pull from stack
+// Increment S, wrap it between $00 and $FF, read at address $100 + S
+g = v => r(256 + (S = (255 & (S+1)))),
+
+// Instructions
+// ============
+
+// The code below creates a function for each valid opcode supported by the CPU.
+// When a function is called:
+// - PC represents the current opcode's address
+// - o is the opcode's value
+// - a equals PC+1
+// - p is the value stored at the address PC+1
+// - c (the cycle counter) equals 2 because two memory reads have already been done (o and p)
+O = [...Array(255)].map((t,o) =>
+  Function(
+
+    (
+
+      // Addressing modes
+      // ----------------
+
+      // Some opcodes require an address in memory
+      // This address can be computed in 11 different ways
+      // The 10 main ones are implemented here, the 11th is included in the last instruction (JMP ind)
+      // The order and implementations below are optimized for a better gzip compression
+
+      // "0": Immediate:
+      // The target address is PC+1, already stored in a
+      // Opcode size: 2 bytes
+      // Cycles total: 2
+      // Cycles addr.: -1 (1 cycle is removed because the first p fetch is redundant, the instruction has to read it again)
+      // Cycles opc. : 1
+      "c--,PC++;"
+
+      // "1": Relative:
+      // (only used for branching)
+      // The target address (between PC-128 and PC+127) = PC + signed offset stored in p
+      // Opcode size: 2 bytes
+      // Cycles total: 2 (no branch) / 3 (branch on same page) / 4 (branch on another page)
+      // Cycles addr.: 0
+      // Cycles opc. : 0-2
+      + "a=a+p-256*(p>>7),PC++;"
+
+      // "2": Indexed indirect X
+      // The target address is absolute and stored at a zero page address which is stored at PC + 1 + X
+      // Opcode size: 2 bytes
+      // Cycles total: 6 (read or write)
+      // Cycles addr.: 3
+      // Cycles opc. : 1
+      + "a=r(p+X&255)+256*r(p+X+1&255),PC++,c++;"
+
+      // "3": Indirect indexed Y
+      // The target address is absolute and stored at a zero page address which is stored at PC+1, then Y is added to it
+      // Opcode size: 2 bytes
+      // Cycles total: 5* (read) / 6 (write)
+      // Cycles addr.: 2-3
+      // Cycles opc. : 0-1
+      // * Cross-page read (if address and address + Y are on different pages) costs 1 extra cycle
+      + "a=r(p)+256*r(p+1&255)+Y,c+=a-Y>>8<a>>8||o>>4==9,PC++;"
+
+      // "4": Zero page X
+      // The target address is equal to zero page address (stored at PC+1) + X, wrapping between $00 and $FF
+      // Opcode size: 2 bytes
+      // Cycles total: 3 (BIT) / 4 (read or write) / 6 (read + write)
+      // Cycles addr.: 1
+      // Cycles opc. : 0-2
+      + "a=r(a)+X&255,PC++;"
+
+      // "5": Zero page Y
+      // The target address is equal to zero page address (stored at PC+1) + Y, wrapping between $00 and $FF
+      // Opcode size: 2 bytes
+      // Cycles total: 4 (read or write)
+      // Cycles addr.: 1
+      // Cycles opc. : 1
+      + "a=r(a)+Y&255,PC++;"
+
+      // "6": Zero page
+      // The target address (between $00 and $FF) is stored in p
+      // Opcode size: 2 bytes
+      // Cycles total: 3 (read or write) / 5 (read + write)
+      // Cycles addr.: 0
+      // Cycles opc. : 1-3
+      + "a=p,PC++;"
+
+      // "7": Absolute
+      // The target address is stored at PC+1 (low byte) and PC+2 (high byte)
+      // Opcode size: 3 bytes
+      // Cycles total: 3 (JMP) / 4 (read or write) / 6 (read + write or JSR)
+      // Cycles addr.: 1
+      // Cycles opc. : 0-3
+      + "a=p+256*r(PC+=2);"
+
+      // "8": Absolute Y
+      // The target address is equal to absolute address (stored at PC+1 and PC+2) + Y
+      // Opcode size: 3 bytes
+      // Cycles total: 4* (read) / 5 (write)
+      // Cycles addr.: 1-2
+      // Cycles opc. : 0-2
+      // * Cross-page read (if address and address + Y are on different pages) costs 1 extra cycle
+      + "t=p+256*r(PC+=2),c+=t>>8<t+Y>>8||o>>4==9,a=t+Y;"
+
+      // "9": Absolute X
+      // The target address is equal to absolute address (stored at PC+1 and PC+2) + X
+      // Opcode size: 3 bytes
+      // Cycles total: 4* (read) / 5 (write) / 7 (read + write)
+      // Cycles addr.: 1-2
+      // Cycles opc. : 0-4
+      // * Cross-page read (if address and address + X are on different pages) costs 1 extra cycle
+      + "t=p+256*r(PC+=2),c+=t>>8<t+X>>8||o>>4==9||(15&o)>13,a=t+X"
+
+      // "Z": implicit or Accumulator
+      // The target is either a flag or a CPU register (no need to compute an address)
+      // (When a "Z" is read, the generated JavaScript code will just contain "undefined;")
+      // Opcode size: 1 byte (no need to increment PC)
+      // Cycles total: 2-7
+      // Cycles addr.: 0
+      // Cycles opc. : 0-5
+      + ""
+
+    // Make an array from this string
+    ).split(";")
+
+    // Fetch the right addressing mode for the current opcode (ignore illegal opcode where o % 4 == 3):
+    // (The string below is optomized for compression: the illegal opcodes are assigned characters that create extra repetitions)
+    [
+      (
+         "020666Z0Z77713Z444Z8Z999"
+        +"720666Z0Z77713Z444Z8Z999"
+        +"Z20666Z0Z77713Z444Z8Z999"
+        +"Z20666Z0Z77713Z444Z8Z999"
+        +"020666Z0Z77713Z445Z8Z998"
+        +"020666Z0Z77713Z445Z8Z998"
+        +"020666Z0Z77713Z444Z8Z999"
+        +"020666Z0Z77713Z444Z8Z999"
+      )[o-(o>>2)]
+    ]
+
+    // Separator
+    + ";"
+
+    // Instructions
+    // ------------
+
+    // There are 56 official instructions, performing operations in memory and/or in the registers
+    // Some instructions use extra cycles:
+    // *  : cross-page when fetching the address costs 1 extra cycle
+    // ** : Same-page branch (PC+2>>8 == a>>8) costs 1 extra cycle. Cross-page branch costs 2 extra cycles
+    // ***: Instructions that read, modify and write a value in memory (+ JSR/RTI/RTS/PLA/PLP) cost 1 to 2 extra cycles
+    // The order and implementations below are also optimized for a better gzip compression
+    // Also, some instructions were splitted in two if they target either the memory or the Accumulator register (ROR, ROL, LSR, ASL)
+
+    + (
+    
+      // " ": TXS (transfer X to stack pointer)
+      // Stack pointer = X
+      // Addressing:   imp
+      // Opcode:       9A
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      "S=X;"
+      
+      // "!": CPX (compare memory and X)
+      // N, Z and C are set with the result of X minus a byte in memory
+      // Flag C is set if there's no borrow
+      // Addressings:  imm, zpg, abs
+      // Opcodes:      E0,  E4,  EC
+      // Cycles total: 2,   3,   4
+      // Cycles addr.: -1,  0,   1
+      // Cycles opc. : 1,   1,   1
+      + "p=r(a),C=X-p>=0,F(X-p);"
+
+      // '"': CPY (compare memory and Y)
+      // N, Z and C are set with the result of Y minus a byte in memory
+      // Flag C is set if there's no borrow
+      // Addressings:  imm, zpg, abs
+      // Opcodes:      C0,  C4,  CC
+      // Cycles total: 2,   3,   4
+      // Cycles addr.: -1,  0,   1
+      // Cycles opc. : 1,   1,   1
+      + "p=r(a),C=Y-p>=0,F(Y-p);"
+
+      // "#": ASL (shift left)
+      // A byte in memory is left shifted. Flags: N, Z, C
+      // The shifted-out bit 7 is saved in C
+      // Addressings:  zpg, zpgX, abs, absX
+      // Opcodes:      06,  16,   0E,  1E
+      // Cycles total: 5,   6,    6,   7
+      // Cycles addr.: 0,   1,    1,   2
+      // Cycles opc. : 3,   3,    3,   3 (***)
+      + "p=r(a),C=p>>7,w(a,F(2*p)),c++;"
+
+      // "$": ROL A (rotate left accumulator)
+      // Rotate left A. Same as left shift but C flag is put into bit 0. Flags: N, Z, C
+      // The shifted-out bit 7 is saved in C
+      // Addressing:   A
+      // Opcode:       2A
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "C=A>>7,A=F(2*A+(1&P));"
+
+      // "%": ROL (rotate left)
+      // Rotate left a byte in memory. Same as left shift but C flag is put into bit 0. Flags: N, Z, C
+      // The shifted-out bit 7 is saved in C
+      // Addressings:  zpg, zpgX, abs, absX
+      // Opcodes:      26,  36,   2E,  3E
+      // Cycles total: 5,   6,    6,   7
+      // Cycles addr.: 0,   1,    1,   2
+      // Cycles opc. : 3,   3,    3,   3 (***)
+      + "p=r(a),C=p>>7,w(a,F(2*p+(1&P))),c++;"
+
+      // "&": LSR A (shift right accumulator)
+      // A is shifted right. Flags: N, Z, C
+      // The shifted-out bit 0 is saved in C
+      // Addressing:   A
+      // Opcode:       4A
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "C=1&A,A=F(A>>1);"
+
+      // "'": LSR (shift right)
+      // A byte in memory is shifted right. Flags: N, Z, C
+      // The shifted-out bit 0 is saved in C
+      // Addressings:  zpg, zpgX, abs, absX
+      // Opcodes:      46,  56,   4E,  5E
+      // Cycles total: 5,   6,    6,   7
+      // Cycles addr.: 0,   1,    1,   2
+      // Cycles opc. : 3,   3,    3,   3 (***)
+      + "p=r(a),C=1&p,w(a,F(p>>1)),c++;"
+
+      // "(": DEX (decrement X)
+      // X is decremented. Flags: N, Z
+      // Addressing:   imp
+      // Opcode:       CA
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "X=F(X-1);"
+
+      // ")": BIT (test bits in memory)
+      // N and V = bits 7 and 6 of operand. Z is set if operand AND A is not zero. Flags: N, Z, V
+      // Addressings:  zpg, abs
+      // Opcodes:      24,   2C
+      // Cycles total: 3,    4
+      // Cycles addr.: 0,    1
+      // Cycles opc. : 1,    1
+      + "p=r(a),F(p&A),N=p>>7&1,V=p>>6&1;"
+
+      // "*": ROR A (rotate right accumulator)
+      // Rotate right A. Same as right shift but C flag is put into bit 7. Flags: N, Z, C
+      // The shifted-out bit 0 is saved in C
+      // Addressing:   A
+      // Opcode:       6A
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "C=1&A,A=F((A>>1)+128*(1&P));"
+
+      // "+": INC (increment memory)
+      // A byte in memory is incremented. Flags: N, Z
+      // Addressings:  zpg, zpgX, abs, absX
+      // Opcodes:      E6,  F6,   EE,  FE
+      // Cycles total: 5,   6,    6,   7
+      // Cycles addr.: 0,   1,    1,   2
+      // Cycles opc. : 3,   3,    3,   3 (***)
+      + "w(a,F(r(a)+1)),c++;"
+
+      // ",": INX (increment X)
+      // X is incremented. Flags: N, Z
+      // Addressing:   imp
+      // Opcode:       E8
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "X=F(X+1);"
+
+      // "-": DEY (decrement Y)
+      // Y is decremented. Flags: N, Z
+      // Addressing:   imp
+      // Opcode:       88
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "Y=F(Y-1);"
+
+      // ".": INY (increment Y)
+      // Y is incremented. Flags: N, Z
+      // Addressing:   imp
+      // Opcode:       C8
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "Y=F(Y+1);"
+
+      // "/": LDY (load Y with memory)
+      // Y = a byte from memory. Flags: N, Z
+      // Addressings:  imm, zpg, zpgX, abs, absX
+      // Opcodes:      A0,  A4,  B4,   AC,  BC
+      // Cycles total: 2,   3,   4,    4,   4*
+      // Cycles addr.: -1,  0,   1,    1,   1*
+      // Cycles opc. : 1,   1,   1,    1,   1
+      + "Y=F(r(a));"
+
+      // 0: ROR (rotate right)
+      // Rotate right a byte in memory. Same as left shift but C flag is put into bit 7. Flags: N, Z, C
+      // The shifted-out bit 0 is saved in C
+      // Addressings:  zpg, zpgX, abs, absX
+      // Opcodes:      66,  76,   6E,  7E
+      // Cycles total: 5,   6,    6,   7
+      // Cycles addr.: 0,   1,    1,   2
+      // Cycles opc. : 3,   3,    3,   3 (***)
+      + "p=r(a),C=1&p,w(a,F((p>>1)+128*(1&P))),c++;"
+
+      // "1": CLC (clear carry flag)
+      // C is set to 0
+      // Addressing:   imp
+      // Opcode:       18
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "C=0;"
+
+      // "2": SEI (set interrupt disable flag)
+      // I is set to 1
+      // Addressing:   imp
+      // Opcode:       78
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "I=1;"
+
+      // "3": CLD (clear decimal flag)
+      // D is set to 0
+      // Addressing:   imp
+      // Opcode:       D8
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "D=0;"
+
+      // "4": CLI (clear interrupt disable flag)
+      // I is set to 0
+      // Addressing:   imp
+      // Opcode:       58
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "I=0;"
+
+      // "5": LDA (load accumulator with memory)
+      // A = a byte from memory. Flags: N, Z
+      // Addressings:  imm, zpg, zpgX, abs, absX, absY, indX, indY
+      // Opcodes:      A9,  A5,  B5,   AD,  BD,   B9,   A1,   B1
+      // Cycles total: 2,   3,   4,    4,   4*,   4*,   6,    5*
+      // Cycles addr.: -1,  0,   1,    1,   1*,   1*    3,    3*
+      // Cycles opc. : 1,   1,   1,    1,   1,    1,    1,    1
+      + "A=F(r(a));"
+
+      // "6": AND: (AND memory and accumulator)
+      // A = A AND a byte in memory. Flags: N, Z
+      // Addressings:  imm, zpg, zpgX, abs, absX, absY, indX, indY
+      // Opcodes:      29,  25,  35,   2D,  3D,   39,   21,   31
+      // Cycles total: 2,   3,   4,    4,   4*,   4*,   6,    5*
+      // Cycles addr.: -1,  0,   1,    1,   1*,   1*    3,    3*
+      // Cycles opc. : 1,   1,   1,    1,   1,    1,    1,    1
+      + "A=F(r(a)&A);"
+      
+      // "7": CMP (compare memory and accumulator)
+      // N, Z and C are set with the result of A - a byte in memory
+      // Flag C is set if there's no borrow
+      // Addressings:  imm, zpg, zpgX, abs, absX, absY, indX, indY
+      // Opcodes:      C9,  C5,  D5,   CD,  DD,   D9,   C1,   D1
+      // Cycles total: 2,   3,   4,    4,   4*,   4*,   6,    5*
+      // Cycles addr.: -1,  0,   1,    1,   1*,   1*    3,    3*
+      // Cycles opc. : 1,   1,   1,    1,   1,    1,    1,    1
+      + "p=r(a),C=A-p>=0,F(A-p);"
+
+      // "8": SBC (subtract from accumulator with carry)
+      // A = A - a byte from memory - (1 - Carry). Flags: N, Z, C, V
+      // Flag C is set if there's no borrow
+      // Flag V is set if the subtraction is incorrectly considered positive
+      // Addressings:  imm, zpg, zpgX, abs, absX, absY, indX, indY
+      // Opcodes:      E9,  E5,  F5,   ED,  FD,   F9,   E1,   F1
+      // Cycles total: 2,   3,   4,    4,   4*,   4*,   6,    5*
+      // Cycles addr.: -1,  0,   1,    1,   1*,   1*    3,    3*
+      // Cycles opc. : 1,   1,   1,    1,   1,    1,    1,    1
+      + "p=r(a),t=A+C-1-p,V=!!(128&(A^p))&&!!(128&(A^t)),C=t>=0,A=F(t);"
+
+      // "9": ADC (add to accumulator with carry)
+      // A = A + a byte in memory + Carry. Flags: N, Z, C, V
+      // Flag C is set if there's a carry
+      // Flag V is set if the sum of two positive numbers is incorrectly considered negative
+      // Addressings:  imm, zpg, zpgX, abs, absX, absY, indX, indY
+      // Opcodes:      69,  65,  75,   6D,  7D,   79,   61,   71
+      // Cycles total: 2,   3,   4,    4,   4*,   4*,   6,    5*
+      // Cycles addr.: -1,  0,   1,    1,   1*,   1*    3,    3*
+      // Cycles opc. : 1,   1,   1,    1,   1,    1,    1,    1
+      + "p=r(a),t=A+C+p,V=!(128&(A^p))&&!!(128&(A^t)),C=t>255,A=F(t);"
+      
+      // ":": BCS (branch on carry set)
+      // PC = address if C is 1
+      // Addressing:   rel 
+      // Opcode:       B0
+      // Cycles total: 2**
+      // Cycles addr.: 0
+      // Cycles opc. : 0**
+      + "C&&(c+=1+(a>>8!=PC+1>>8),PC=a);"
+      
+      // ";": BMI (branch on minus)
+      // PC = address if N is 1
+      // Addressing:   rel 
+      // Opcode:       30
+      // Cycles total: 2**
+      // Cycles addr.: 0
+      // Cycles opc. : 0**
+      + "N&&(c+=1+(a>>8!=PC+1>>8),PC=a);"
+      
+      // "<": BEQ (branch if equal)
+      // PC = address if Z is 0
+      // Addressing:   rel 
+      // Opcode:       F0
+      // Cycles total: 2**
+      // Cycles addr.: 0
+      // Cycles opc. : 0**
+      + "Z&&(c+=1+(a>>8!=PC+1>>8),PC=a);"
+      
+      // "=": BPL (branch on plus)
+      // PC = address if N is 0
+      // Addressing:   rel 
+      // Opcode:       10
+      // Cycles total: 2**
+      // Cycles addr.: 0
+      // Cycles opc. : 0**
+      + "N||(c+=1+(a>>8!=PC+1>>8),PC=a);"
+      
+      // ">": BVS (branch on overflow set)
+      // PC = address if V is 1
+      // Addressing:   rel 
+      // Opcode:       70
+      // Cycles total: 2**
+      // Cycles addr.: 0
+      // Cycles opc. : 0**
+      + "V&&(c+=1+(a>>8!=PC+1>>8),PC=a);"
+      
+      // "?": BNE (branch if not equal)
+      // PC = address if Z is 1
+      // Addressing:   rel 
+      // Opcode:       D0
+      // Cycles total: 2**
+      // Cycles addr.: 0
+      // Cycles opc. : 0**
+      + "Z||(c+=1+(a>>8!=PC+1>>8),PC=a);"
+      
+      // "@": BVC (branch on overflow clear)
+      // PC = address if V is 0
+      // Addressing:   rel 
+      // Opcode:       50
+      // Cycles total: 2**
+      // Cycles addr.: 0
+      // Cycles opc. : 0**
+      + "V||(c+=1+(a>>8!=PC+1>>8),PC=a);"
+      
+      // "A": LDX (load X with memory)
+      // X = a byte from memory. Flags: N, Z
+      // Addressings:  imm, zpg, zpgY, abs, absY
+      // Opcodes:      A2,  A6,  B6,   AE,  BE
+      // Cycles total: 2,   3,   4,    4,   4*
+      // Cycles addr.: -1,  0,   1,    1,   1*
+      // Cycles opc. : 1,   1,   1,    1,   1
+      + "X=F(r(a));"
+      
+      // "B": EOR (exclusive-or memory and accumulator)
+      // A = A XOR a byte in memory. Flags: N, Z
+      // Addressings:  imm, zpg, zpgX, abs, absX, absY, indX, indY
+      // Opcodes:      49,  45,  55,   4D,  5D,   59,   41,   51
+      // Cycles total: 2,   3,   4,    4,   4*,   4*,   6,    5*
+      // Cycles addr.: -1,  0,   1,    1,   1*,   1*    3,    3*
+      // Cycles opc. : 1,   1,   1,    1,   1,    1,    1,    1
+      + "A=F(r(a)^A);"
+      
+      // "C": DEC (decrement memory)
+      // A byte in memory is decremented. Flags: N, Z
+      // Addressings:  zpg, zpgX, abs, absX
+      // Opcodes:      C6,  D6,   CE,  DE
+      // Cycles total: 5,   6,    6,   7
+      // Cycles addr.: 0,   1,    1,   2
+      // Cycles opc. : 3,   3,    3,   3 (***)
+      + "w(a,F((r(a)-1)&255)),c++;"
+      
+      // "D": ASL A (shift left accumulator)
+      // A is left shifted. Flags: N, Z, C
+      // The shifted-out bit 7 is saved in C
+      // Addressing:   A
+      // Opcode:       0A
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "C=A>>7,A=F(2*A);"
+      
+      // "E": JSR (jump to subroutine)
+      // Push PC + 2, PC = absolute address
+      // Addressing:   abs
+      // Opcode:       20
+      // Cycles total: 6
+      // Cycles addr.: 1
+      // Cycles opc. : 3 (***)
+      + "h(PC>>8),h(255&PC),PC=a-1,c++;"
+      
+      // "F": SEC (set carry flag)
+      // C is set to 1
+      // Addressing:   imp
+      // Opcode:       38
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "C=1;"
+      
+      // "G": SED (set decomal flag)
+      // D is set to 1
+      // Addressing:   imp
+      // Opcode:       F8
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "D=1;"
+      
+      // "H": CLV (clear overflow flag)
+      // V is set to 0
+      // Addressing:   imp
+      // Opcode:       B8
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "V=0;"
+      
+      // "I": ORA (OR memory and accumulator)
+      // A = A OR a byte in memory. Flags: N, Z. 
+      // Addressings:  imm, zpg, zpgX, abs, absX, absY, indX, indY
+      // Opcodes:      09,  05,  15,   0D,  1D,   19,   01,   11
+      // Cycles total: 2,   3,   4,    4,   4*,   4*,   6,    5*
+      // Cycles addr.: -1,  0,   1,    1,   1*,   1*    3,    3*
+      // Cycles opc. : 1,   1,   1,    1,   1,    1,    1,    1
+      + "A=F(r(a)|A);"
+      
+      // "J": PHA (push accumulator)
+      // Push A
+      // Addressing:   imp
+      // Opcode:       48
+      // Cycles total: 3
+      // Cycles addr.: 0
+      // Cycles opc. : 1
+      + "h(A);"
+      
+      // "K": PHP (push processor status)
+      // Push P with B flag set to 1
+      // Addressing:   imp
+      // Opcode:       08
+      // Cycles total: 3
+      // Cycles addr.: 0
+      // Cycles opc. : 1
+      + "h(P|16);"
+      
+      // "L": PLA (pull accumulator)
+      // Pull A. Flags: N, Z.
+      // Addressing:   imp
+      // Opcode:       68
+      // Cycles total: 4 (*** 1 extra cycle according to nestest)
+      // Cycles addr.: 0
+      // Cycles opc. : 1
+      + "A=F(g()),c++;"
+      
+      // "M": PLP (pull processor status)
+      // Pull P and set all flags
+      // (According to nestest, the B flag stays at 0) 
+      // Addressing:   imp
+      // Opcode:       28
+      // Cycles total: 4 (*** 1 extra cycle according to nestest)
+      // Cycles addr.: 0
+      // Cycles opc. : 1
+      + "f(g()&239),c++;"
+      
+      // "N": RTI (return from interrupt)
+      // Pull P, set all flags, pull PC
+      // Addressing:   imp
+      // Opcode:       40
+      // Cycles total: 6
+      // Cycles addr.: 0
+      // Cycles opc. : 4 (***)
+      + "f(g()),PC=g()+256*g()-1,c++;"
+      
+      // "O": BCC (branch on carry clear)
+      // PC = address if C is 0
+      // Addressing:   rel 
+      // Opcode:       90
+      // Cycles total: 2**
+      // Cycles addr.: 0
+      // Cycles opc. : 0**
+      + "C||(c+=1+(a>>8!=PC+1>>8),PC=a);"
+      
+      // "P": BRK (force break)
+      // Interrupt, push PC+2 (PC+1 is a padding byte), push P with B flag set to 1, set I to 1
+      // This is equivalent to an IRQ interrupt with another value of P pushed on the stack:
+      // "h(PC>>8),h(255&PC),h(P|16),I=1,PC=r(65534)+256*r(65535)-1;"
+      // Addressing:   imp
+      // Opcode:       00
+      // Cycles total: 7
+      // Cycles addr.: 0
+      // Cycles opc. : 5
+      //+ 
+      + "op(3,1);"
+      
+      // "Q": TAY (transfer accumulator to Y)
+      // Y = A. Flags: N, Z
+      // Addressing:   imp
+      // Opcode:       A8
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "Y=F(A);"
+      
+      // "R": STA (store accumulator)
+      // A is copied in memory
+      // Addressings:  zpg, zpgX, abs, absX, absY, indX, indY
+      // Opcodes:      85,  95,   8D,  9D,   99,   81,   91
+      // Cycles total: 3,   4,    4,   5,    5,    6,    6
+      // Cycles addr.: 0,   1,    1,   2,    2     3,    2
+      // Cycles opc. : 1,   1,    1,   1,    1,    1,    1
+      + "w(a,A);"
+      
+      // "S": STX (store X)
+      // X is copied in memory
+      // Addressings:  zpg, zpgY, abs
+      // Opcodes:      86,  96,   8E
+      // Cycles total: 3,   4,    4
+      // Cycles addr.: 0,   1,    1
+      // Cycles opc. : 1,   1,    1
+      + "w(a,X);"
+      
+      // "T": TSX (transfer stack pointer to X)
+      // X = S. Flags: N, Z
+      // Addressing:   imp
+      // Opcode:       BA
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "X=F(S);"
+      
+      // "U": TAX (transfer accumulator to X)
+      // X = A. Flags: N, Z
+      // Addressing:   imp
+      // Opcode:       AA
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "X=F(A);"
+      
+      // "V": STY (store Y)
+      // Y is copied in memory
+      // Addressings:  zpg, zpgX, abs
+      // Opcodes:      84,  94,   8C
+      // Cycles total: 3,   4,    4
+      // Cycles addr.: 0,   1,    1
+      // Cycles opc. : 1,   1,    1
+      + "w(a,Y);"
+      
+      // "W": TYA (transfer Y to accumulator)
+      // A = Y. Flags: N, Z
+      // Addressing:   imp
+      // Opcode:       98
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "A=F(Y);"
+      
+      // "X": TXA (transfer X to accumulator)
+      // A = X. Flags: N, Z
+      // Addressing:   imp
+      // Opcode:       8A
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + "A=F(X);"
+      
+      // "Y": RTS (return from subroutine)
+      // Pull and increment PC
+      // Addressing:   imp
+      // Opcode:       60
+      // Cycles total: 6
+      // Cycles addr.: 0
+      // Cycles opc. : 0 (***)
+      + "PC=g()+256*g(c+=2);"
+      
+      // "Z": JMP (jump to new location)
+      // Set a new value to PC
+      // Addressings:  abs
+      // Opcodes:      4C
+      // Cycles total: 3
+      // Cycles addr.: 1
+      // Cycles opc. : 0
+      + "PC=a-1;"
+      
+      // "[" JMP indirect
+      // Jump to an address stored anywhere in memory. The address of this address is stored after the opcode
+      // Hardware bug: if the indirect address falls on a page boundary ($xxFF), it will wrap and fetch the low byte in the same page ($xx00)
+      // Addressing:   ind
+      // Opcodes:      6C
+      // Cycles total: 5
+      // Cycles addr.: 3
+      // Cycles opc. : 2
+      + "PC=r(a)+256*r(a+1-256*((a&255)==255))-1"
+
+      // "z": NOP (no operation)
+      // (When a "z" is read, the generated JavaScript code will just contain "undefined;")
+      // Addressing:   imp
+      // Opcode:       EA
+      // Cycles total: 2
+      // Cycles addr.: 0
+      // Cycles opc. : 0
+      + ""
+
+    // Make an array from this string
+    ).split(";")
+
+    // Fetch the right instruction for the current opcode (ignore every illegal opcode where o % 4 == 3):
+    // (The string below is optomized for compression: all the illegal opcodes are assigned characters that allow extra repetition)
+    [
+       (
+         `PI#PI#KIDPI#=I#PI#1IDPI#`
+        +`E6%)6%M6$)6%;6%E6%F6%E6%`
+        +`NB'NB'JB&ZB'@B'NB'4B'NB'`
+        +`Y90Y90L9*[90>90Y90290Y90`
+        +`VRSVRS-zXVRSORSVRSWR VRS`
+        +`/5A/5AQ5U/5A:5A/5AH5T/5A`
+        +`"7C"7C.7("7C?7C"7C37C"7C`
+        +`!8+!8+,8z!8+<8+!8+G8+!8+`
+      )[o - (o >> 2)].charCodeAt() - 32
+    ]
+  )
+);
+
+// Emulation
+// ---------
+
+// If an interrupt (v = 1/2/3) is specified, it's executed
+// Otherwise, execute the next opcode at the address pointed by the PC register
+// z means BRK opcode (similar to IRQ, but with a slightly different P pushed on the stack)
+op = (v, z) => (
+
+  // - Reset cycle counter
+  // - Fetch opcode at address PC (costs 1 cycle), save it in o
+  // - Increment PC, save it in a
+  // - Fetch the byte at address a (costs 1 cycle), save it in p
+  c = 0,
+  o = r(PC),
+  p = r(a = PC+1),
+
+  // Execute an interrupt if v is set
+  v ? (
+
+    // 1: NMI:
+    // Push PC and P with B flag set to 0, then set I to 1,
+    // then jump to address stored at $FFFA-$FFFB
+    // This costs 7 cycles
+    // On NES, it is triggered at the beginning of VBlank if bit 7 of PPU register $2000 is set, otherwise it's skipped and only costs 2 cycles
+
+    // 2: Reset:
+    // Push PC and P with B flag set to 0, then set I to 1,
+    // then jump to address stored at $FFFC-$FFFD
+    // This resets c and costs 8 cycles
+    // On NES, this also resets the PPU
+
+    // 3: IRQ/BRK:
+    // Push PC and P with B flag set to 0 (IRQ) or 1 (BRK), then set I to 1,
+    // then jump to address stored at $FFFE-$FFFF
+    // This costs 7 cycles
+
+    // Only execute NMI if VBlank (bit 7 of $2000) is set
+    (v > 1 || r(0x2000) >> 7)
+    
+    // Only execute IRQ if I is not set
+    && (v < 3 || !I)
+    
+    && (
+      (
+        (v - 2) 
+        ? (h(PC >> 8), h(255 & PC), h(z ? (P|16) : (239 & P))) // NMI/IRQ/BRK
+        : (S = (S-3) & 255) // Reset
+      ),
+
+      I = 1,
+      PC = r(65528 + v * 2) + 256 * r(65528 + v * 2 + 1)
+    )
+  )
+
+  // Or execute the next instruction:
+  : (
+    o && O[o](),
+    PC++,
+    PC &= 0xFFFF
+  ),
+
+  // Update status register P according to the new flags values
+  P = C + Z*2 + I*4 + D*8 + B*16 + 32 + V*64 + N*128
+)
+
+;
+// JSNES 2.1.0 audio core, Apache-2.0. See LICENSE-JSNES.txt.
+// Source commit b8a45d088e922b6abcd87c4eb1b7237919e9d3d2.
+var JSNESPAPU=(function(){
+function copyArrayElements(src, srcPos, dest, destPos, length) {
+  for (let i = 0; i < length; ++i) {
+    dest[destPos + i] = src[srcPos + i];
+  }
+}
+
+function copyArray(src) {
+  return src.slice(0);
+}
+
+function fromJSON(obj, state) {
+  const props = obj.constructor.JSON_PROPERTIES;
+  for (let i = 0; i < props.length; i++) {
+    const prop = props[i];
+    const current = obj[prop];
+    const value = state[prop];
+    if (ArrayBuffer.isView(current) && Array.isArray(value)) {
+      // Typed arrays: copy data in-place instead of replacing the array,
+      // since JSON.parse produces plain arrays not typed arrays.
+      current.set(value);
+    } else {
+      obj[prop] = value;
+    }
+  }
+}
+
+function toJSON(obj) {
+  const state = {};
+  const props = obj.constructor.JSON_PROPERTIES;
+  for (let i = 0; i < props.length; i++) {
+    const prop = props[i];
+    const value = obj[prop];
+    // Typed arrays must be converted to plain arrays for JSON.stringify,
+    // which otherwise serializes them as objects ({0: v, 1: v, ...}).
+    state[prop] = ArrayBuffer.isView(value) ? Array.from(value) : value;
+  }
+  return state;
+}
+
+
+class ChannelDM {
+  static MODE_NORMAL = 0;
+  static MODE_LOOP = 1;
+  static MODE_IRQ = 2;
+
+  static JSON_PROPERTIES = [
+    "isEnabled",
+    "hasSample",
+    "irqGenerated",
+    "playMode",
+    "dmaFrequency",
+    "dmaCounter",
+    "deltaCounter",
+    "playStartAddress",
+    "playAddress",
+    "playLength",
+    "playLengthCounter",
+    "shiftCounter",
+    "reg4012",
+    "reg4013",
+    "sample",
+    "dacLsb",
+    "data",
+    "lastFetchedByte",
+  ];
+
+  constructor(papu) {
+    this.papu = papu;
+
+    this.isEnabled = false;
+    this.hasSample = false;
+    this.irqGenerated = false;
+    this.playMode = ChannelDM.MODE_NORMAL;
+    this.dmaFrequency = 0;
+    this.dmaCounter = 0;
+    this.deltaCounter = 0;
+    this.playStartAddress = 0;
+    this.playAddress = 0;
+    this.playLength = 0;
+    this.playLengthCounter = 0;
+    this.sample = 0;
+    this.dacLsb = 0;
+    this.shiftCounter = 0;
+    this.reg4012 = 0;
+    this.reg4013 = 0;
+    this.data = 0;
+    this.lastFetchedByte = 0;
+  }
+
+  clockDmc() {
+    // Only alter DAC value if the sample buffer has data:
+    if (this.hasSample) {
+      if ((this.data & 1) === 0) {
+        // Decrement delta:
+        if (this.deltaCounter > 0) {
+          this.deltaCounter--;
+        }
+      } else {
+        // Increment delta:
+        if (this.deltaCounter < 63) {
+          this.deltaCounter++;
+        }
+      }
+
+      // Update sample value:
+      this.sample = this.isEnabled ? (this.deltaCounter << 1) + this.dacLsb : 0;
+
+      // Update shift register:
+      this.data >>= 1;
+    }
+
+    this.dmaCounter--;
+    if (this.dmaCounter <= 0) {
+      // No more sample bits.
+      this.hasSample = false;
+      this.endOfSample();
+      this.dmaCounter = 8;
+    }
+
+    if (this.irqGenerated) {
+      this.papu.nes.cpu.requestIrq(this.papu.nes.cpu.IRQ_NORMAL);
+    }
+  }
+
+  endOfSample() {
+    if (this.playLengthCounter === 0 && this.playMode === ChannelDM.MODE_LOOP) {
+      // Start from beginning of sample:
+      this.playAddress = this.playStartAddress;
+      this.playLengthCounter = this.playLength;
+    }
+
+    if (this.playLengthCounter > 0) {
+      // Fetch next sample:
+      this.nextSample();
+
+      if (this.playLengthCounter === 0) {
+        // Last byte of sample fetched, generate IRQ:
+        if (this.playMode === ChannelDM.MODE_IRQ) {
+          // Generate IRQ:
+          this.irqGenerated = true;
+        }
+      }
+    }
+  }
+
+  nextSample() {
+    // Fetch byte:
+    this.data = this.papu.nes.mmap.load(this.playAddress);
+    // On real hardware, the DMA fetch puts this byte on the CPU data bus.
+    // Store it so cpu.load() can detect DMA bus hijacking mid-instruction.
+    // See https://www.nesdev.org/wiki/APU_DMC#Memory_reader
+    this.lastFetchedByte = this.data;
+    this.papu.nes.cpu.haltCycles(4);
+
+    this.playLengthCounter--;
+    this.playAddress++;
+    if (this.playAddress > 0xffff) {
+      this.playAddress = 0x8000;
+    }
+
+    this.hasSample = true;
+  }
+
+  writeReg(address, value) {
+    if (address === 0x4010) {
+      // Play mode, DMA Frequency
+      if (value >> 6 === 0) {
+        this.playMode = ChannelDM.MODE_NORMAL;
+      } else if (((value >> 6) & 1) === 1) {
+        this.playMode = ChannelDM.MODE_LOOP;
+      } else if (value >> 6 === 2) {
+        this.playMode = ChannelDM.MODE_IRQ;
+      }
+
+      if ((value & 0x80) === 0) {
+        this.irqGenerated = false;
+      }
+
+      this.dmaFrequency = this.papu.getDmcFrequency(value & 0xf);
+    } else if (address === 0x4011) {
+      // Delta counter load register:
+      this.deltaCounter = (value >> 1) & 63;
+      this.dacLsb = value & 1;
+      this.sample = (this.deltaCounter << 1) + this.dacLsb; // update sample value
+    } else if (address === 0x4012) {
+      // DMA address load register.
+      // Only updates the start address register — the active playAddress is
+      // loaded from playStartAddress when a sample restart occurs (via $4015).
+      // See https://www.nesdev.org/wiki/APU_DMC
+      this.playStartAddress = (value << 6) | 0x0c000;
+      this.reg4012 = value;
+    } else if (address === 0x4013) {
+      // Length of play code.
+      // Only updates the length register — the active playLengthCounter is
+      // loaded from playLength when a sample restart occurs (via $4015 or
+      // loop). Writing $4013 does not affect a currently playing sample.
+      // See https://www.nesdev.org/wiki/APU_DMC
+      this.playLength = (value << 4) + 1;
+      this.reg4013 = value;
+    } else if (address === 0x4015) {
+      // DMC/IRQ Status
+      // Writing $4015 always clears the DMC IRQ flag first, before any
+      // other effects. On real hardware, the flag clear occurs on the
+      // write cycle, while DMA fetches happen 3-4 cycles later — so a
+      // DMA fetch triggered by this write CAN set a new IRQ flag.
+      // See https://www.nesdev.org/wiki/APU_DMC
+      this.irqGenerated = false;
+
+      if (((value >> 4) & 1) === 0) {
+        // Disable: set bytes remaining to 0.
+        this.playLengthCounter = 0;
+      } else {
+        // Enable: only restart the sample if bytes remaining is 0.
+        // If the sample is still playing (bytes remaining > 0), this
+        // write has no effect on playback.
+        if (this.playLengthCounter === 0) {
+          this.playAddress = this.playStartAddress;
+          this.playLengthCounter = this.playLength;
+          // On real hardware, when DMC is enabled and the sample buffer is
+          // empty, a DMA fetch fires within a few CPU cycles. Trigger it
+          // immediately so the DMASync loop in test ROMs can detect the
+          // first fetch. See https://www.nesdev.org/wiki/APU_DMC
+          if (!this.hasSample && this.playLengthCounter > 0) {
+            this.nextSample();
+            this.dmaCounter = 8;
+            this.shiftCounter = this.dmaFrequency;
+            // If the immediate DMA fetch consumed the last byte (e.g. a
+            // 1-byte sample), set the IRQ flag just like endOfSample does.
+            if (
+              this.playLengthCounter === 0 &&
+              this.playMode === ChannelDM.MODE_IRQ
+            ) {
+              this.irqGenerated = true;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  setEnabled(value) {
+    // Just track the enable flag. The restart logic (reloading address and
+    // length counter) is handled in writeReg for $4015, which is always
+    // called after setEnabled in the $4015 write path.
+    this.isEnabled = value;
+  }
+
+  getLengthStatus() {
+    return this.playLengthCounter === 0 || !this.isEnabled ? 0 : 1;
+  }
+
+  getIrqStatus() {
+    return this.irqGenerated ? 1 : 0;
+  }
+
+  toJSON() {
+    return toJSON(this);
+  }
+
+  fromJSON(s) {
+    fromJSON(this, s);
+  }
+}
+
+
+
+class ChannelNoise {
+  constructor(papu) {
+    this.papu = papu;
+
+    this.progTimerCount = 0;
+    this.progTimerMax = 0;
+    this.isEnabled = false;
+    this.lengthCounter = 0;
+    this.lengthCounterEnable = false;
+    this.envDecayDisable = false;
+    this.envDecayLoopEnable = false;
+    this.envReset = false;
+    this.shiftNow = false;
+    this.envDecayRate = 0;
+    this.envDecayCounter = 0;
+    this.envVolume = 0;
+    this.masterVolume = 0;
+    this.shiftReg = 1;
+    this.randomBit = 0;
+    this.randomMode = 0;
+    this.sampleValue = 0;
+    this.tmp = 0;
+    this.accValue = 0;
+    this.accCount = 1;
+  }
+
+  clockLengthCounter() {
+    if (this.lengthCounterEnable && this.lengthCounter > 0) {
+      this.lengthCounter--;
+      if (this.lengthCounter === 0) {
+        this.updateSampleValue();
+      }
+    }
+  }
+
+  clockEnvDecay() {
+    if (this.envReset) {
+      // Reset envelope:
+      this.envReset = false;
+      this.envDecayCounter = this.envDecayRate + 1;
+      this.envVolume = 0xf;
+    } else if (--this.envDecayCounter <= 0) {
+      // Normal handling:
+      this.envDecayCounter = this.envDecayRate + 1;
+      if (this.envVolume > 0) {
+        this.envVolume--;
+      } else {
+        this.envVolume = this.envDecayLoopEnable ? 0xf : 0;
+      }
+    }
+    if (this.envDecayDisable) {
+      this.masterVolume = this.envDecayRate;
+    } else {
+      this.masterVolume = this.envVolume;
+    }
+    this.updateSampleValue();
+  }
+
+  updateSampleValue() {
+    if (this.isEnabled && this.lengthCounter > 0) {
+      this.sampleValue = this.randomBit * this.masterVolume;
+    }
+  }
+
+  writeReg(address, value) {
+    if (address === 0x400c) {
+      // Volume/Envelope decay:
+      this.envDecayDisable = (value & 0x10) !== 0;
+      this.envDecayRate = value & 0xf;
+      this.envDecayLoopEnable = (value & 0x20) !== 0;
+      this.lengthCounterEnable = (value & 0x20) === 0;
+      if (this.envDecayDisable) {
+        this.masterVolume = this.envDecayRate;
+      } else {
+        this.masterVolume = this.envVolume;
+      }
+    } else if (address === 0x400e) {
+      // Programmable timer:
+      this.progTimerMax = this.papu.getNoiseWaveLength(value & 0xf);
+      this.randomMode = value >> 7;
+    } else if (address === 0x400f) {
+      // Length counter — only loaded when the channel is enabled via $4015.
+      // Writing this register while disabled has no effect on the length counter.
+      // See https://www.nesdev.org/wiki/APU#Status_($4015)
+      if (this.isEnabled) {
+        this.lengthCounter = this.papu.getLengthMax(value & 248);
+      }
+      this.envReset = true;
+    }
+    // Update:
+    //updateSampleValue();
+  }
+
+  setEnabled(value) {
+    this.isEnabled = value;
+    if (!value) {
+      this.lengthCounter = 0;
+    }
+    this.updateSampleValue();
+  }
+
+  getLengthStatus() {
+    return this.lengthCounter === 0 || !this.isEnabled ? 0 : 1;
+  }
+
+  toJSON() {
+    return toJSON(this);
+  }
+
+  fromJSON(s) {
+    fromJSON(this, s);
+  }
+
+  static JSON_PROPERTIES = [
+    "isEnabled",
+    "envDecayDisable",
+    "envDecayLoopEnable",
+    "lengthCounterEnable",
+    "envReset",
+    "shiftNow",
+    "lengthCounter",
+    "progTimerCount",
+    "progTimerMax",
+    "envDecayRate",
+    "envDecayCounter",
+    "envVolume",
+    "masterVolume",
+    "shiftReg",
+    "randomBit",
+    "randomMode",
+    "sampleValue",
+    "accValue",
+    "accCount",
+    "tmp",
+  ];
+}
+
+
+
+class ChannelSquare {
+  constructor(papu, square1) {
+    this.papu = papu;
+
+    // prettier-ignore
+    this.dutyLookup = [
+           0, 1, 0, 0, 0, 0, 0, 0,
+           0, 1, 1, 0, 0, 0, 0, 0,
+           0, 1, 1, 1, 1, 0, 0, 0,
+           1, 0, 0, 1, 1, 1, 1, 1
+      ];
+    // prettier-ignore
+    this.impLookup = [
+           1,-1, 0, 0, 0, 0, 0, 0,
+           1, 0,-1, 0, 0, 0, 0, 0,
+           1, 0, 0, 0,-1, 0, 0, 0,
+          -1, 0, 1, 0, 0, 0, 0, 0
+      ];
+
+    this.sqr1 = square1;
+
+    this.progTimerCount = 0;
+    this.progTimerMax = 0;
+    this.lengthCounter = 0;
+    this.squareCounter = 0;
+    this.sweepCounter = 0;
+    this.sweepCounterMax = 0;
+    this.sweepMode = 0;
+    this.sweepShiftAmount = 0;
+    this.envDecayRate = 0;
+    this.envDecayCounter = 0;
+    this.envVolume = 0;
+    this.masterVolume = 0;
+    this.dutyMode = 0;
+    this.vol = 0;
+    this.isEnabled = false;
+    this.lengthCounterEnable = false;
+    this.sweepActive = false;
+    this.sweepCarry = false;
+    this.envDecayDisable = false;
+    this.envDecayLoopEnable = false;
+    this.envReset = false;
+    this.updateSweepPeriod = false;
+    this.sweepResult = 0;
+    this.sampleValue = 0;
+  }
+
+  clockLengthCounter() {
+    if (this.lengthCounterEnable && this.lengthCounter > 0) {
+      this.lengthCounter--;
+      if (this.lengthCounter === 0) {
+        this.updateSampleValue();
+      }
+    }
+  }
+
+  clockEnvDecay() {
+    if (this.envReset) {
+      // Reset envelope:
+      this.envReset = false;
+      this.envDecayCounter = this.envDecayRate + 1;
+      this.envVolume = 0xf;
+    } else if (--this.envDecayCounter <= 0) {
+      // Normal handling:
+      this.envDecayCounter = this.envDecayRate + 1;
+      if (this.envVolume > 0) {
+        this.envVolume--;
+      } else {
+        this.envVolume = this.envDecayLoopEnable ? 0xf : 0;
+      }
+    }
+
+    if (this.envDecayDisable) {
+      this.masterVolume = this.envDecayRate;
+    } else {
+      this.masterVolume = this.envVolume;
+    }
+    this.updateSampleValue();
+  }
+
+  clockSweep() {
+    if (--this.sweepCounter <= 0) {
+      this.sweepCounter = this.sweepCounterMax + 1;
+      if (
+        this.sweepActive &&
+        this.sweepShiftAmount > 0 &&
+        this.progTimerMax > 7
+      ) {
+        // Calculate result from shifter:
+        this.sweepCarry = false;
+        if (this.sweepMode === 0) {
+          this.progTimerMax += this.progTimerMax >> this.sweepShiftAmount;
+          if (this.progTimerMax > 0x7ff) {
+            this.progTimerMax = 4095;
+            this.sweepCarry = true;
+          }
+        } else {
+          this.progTimerMax =
+            this.progTimerMax -
+            ((this.progTimerMax >> this.sweepShiftAmount) +
+              (this.sqr1 ? 1 : 0));
+        }
+      }
+    }
+
+    if (this.updateSweepPeriod) {
+      this.updateSweepPeriod = false;
+      this.sweepCounter = this.sweepCounterMax + 1;
+    }
+  }
+
+  updateSampleValue() {
+    if (this.isEnabled && this.lengthCounter > 0 && this.progTimerMax > 7) {
+      if (
+        this.sweepMode === 0 &&
+        this.progTimerMax + (this.progTimerMax >> this.sweepShiftAmount) > 0x7ff
+      ) {
+        //if (this.sweepCarry) {
+        this.sampleValue = 0;
+      } else {
+        this.sampleValue =
+          this.masterVolume *
+          this.dutyLookup[(this.dutyMode << 3) + this.squareCounter];
+      }
+    } else {
+      this.sampleValue = 0;
+    }
+  }
+
+  writeReg(address, value) {
+    let addrAdd = this.sqr1 ? 0 : 4;
+    if (address === 0x4000 + addrAdd) {
+      // Volume/Envelope decay:
+      this.envDecayDisable = (value & 0x10) !== 0;
+      this.envDecayRate = value & 0xf;
+      this.envDecayLoopEnable = (value & 0x20) !== 0;
+      this.dutyMode = (value >> 6) & 0x3;
+      this.lengthCounterEnable = (value & 0x20) === 0;
+      if (this.envDecayDisable) {
+        this.masterVolume = this.envDecayRate;
+      } else {
+        this.masterVolume = this.envVolume;
+      }
+      this.updateSampleValue();
+    } else if (address === 0x4001 + addrAdd) {
+      // Sweep:
+      this.sweepActive = (value & 0x80) !== 0;
+      this.sweepCounterMax = (value >> 4) & 7;
+      this.sweepMode = (value >> 3) & 1;
+      this.sweepShiftAmount = value & 7;
+      this.updateSweepPeriod = true;
+    } else if (address === 0x4002 + addrAdd) {
+      // Programmable timer:
+      this.progTimerMax &= 0x700;
+      this.progTimerMax |= value;
+    } else if (address === 0x4003 + addrAdd) {
+      // Programmable timer, length counter
+      this.progTimerMax &= 0xff;
+      this.progTimerMax |= (value & 0x7) << 8;
+
+      if (this.isEnabled) {
+        this.lengthCounter = this.papu.getLengthMax(value & 0xf8);
+      }
+
+      this.envReset = true;
+    }
+  }
+
+  setEnabled(value) {
+    this.isEnabled = value;
+    if (!value) {
+      this.lengthCounter = 0;
+    }
+    this.updateSampleValue();
+  }
+
+  getLengthStatus() {
+    return this.lengthCounter === 0 || !this.isEnabled ? 0 : 1;
+  }
+
+  toJSON() {
+    return toJSON(this);
+  }
+
+  fromJSON(s) {
+    fromJSON(this, s);
+  }
+
+  static JSON_PROPERTIES = [
+    "isEnabled",
+    "lengthCounterEnable",
+    "sweepActive",
+    "envDecayDisable",
+    "envDecayLoopEnable",
+    "envReset",
+    "sweepCarry",
+    "updateSweepPeriod",
+    "progTimerCount",
+    "progTimerMax",
+    "lengthCounter",
+    "squareCounter",
+    "sweepCounter",
+    "sweepCounterMax",
+    "sweepMode",
+    "sweepShiftAmount",
+    "envDecayRate",
+    "envDecayCounter",
+    "envVolume",
+    "masterVolume",
+    "dutyMode",
+    "sweepResult",
+    "sampleValue",
+    "vol",
+  ];
+}
+
+
+
+class ChannelTriangle {
+  constructor(papu) {
+    this.papu = papu;
+
+    this.progTimerCount = 0;
+    this.progTimerMax = 0;
+    this.triangleCounter = 0;
+    this.isEnabled = false;
+    this.sampleCondition = false;
+    this.lengthCounter = 0;
+    this.lengthCounterEnable = false;
+    this.linearCounter = 0;
+    this.lcLoadValue = 0;
+    this.lcHalt = true;
+    this.lcControl = false;
+    this.tmp = 0;
+    this.sampleValue = 0xf;
+  }
+
+  clockLengthCounter() {
+    if (this.lengthCounterEnable && this.lengthCounter > 0) {
+      this.lengthCounter--;
+      if (this.lengthCounter === 0) {
+        this.updateSampleCondition();
+      }
+    }
+  }
+
+  clockLinearCounter() {
+    if (this.lcHalt) {
+      // Load:
+      this.linearCounter = this.lcLoadValue;
+      this.updateSampleCondition();
+    } else if (this.linearCounter > 0) {
+      // Decrement:
+      this.linearCounter--;
+      this.updateSampleCondition();
+    }
+    if (!this.lcControl) {
+      // Clear halt flag:
+      this.lcHalt = false;
+    }
+  }
+
+  getLengthStatus() {
+    return this.lengthCounter === 0 || !this.isEnabled ? 0 : 1;
+  }
+
+  // eslint-disable-next-line no-unused-vars
+  readReg(address) {
+    return 0;
+  }
+
+  writeReg(address, value) {
+    if (address === 0x4008) {
+      // New values for linear counter:
+      this.lcControl = (value & 0x80) !== 0;
+      this.lcLoadValue = value & 0x7f;
+
+      // Length counter enable:
+      this.lengthCounterEnable = !this.lcControl;
+    } else if (address === 0x400a) {
+      // Programmable timer:
+      this.progTimerMax &= 0x700;
+      this.progTimerMax |= value;
+    } else if (address === 0x400b) {
+      // Programmable timer, length counter
+      this.progTimerMax &= 0xff;
+      this.progTimerMax |= (value & 0x07) << 8;
+      // Length counter is only loaded when the channel is enabled via $4015.
+      // Writing this register while disabled has no effect on the length counter.
+      // See https://www.nesdev.org/wiki/APU#Status_($4015)
+      if (this.isEnabled) {
+        this.lengthCounter = this.papu.getLengthMax(value & 0xf8);
+      }
+      this.lcHalt = true;
+    }
+
+    this.updateSampleCondition();
+  }
+
+  clockProgrammableTimer(nCycles) {
+    if (this.progTimerMax > 0) {
+      this.progTimerCount += nCycles;
+      while (
+        this.progTimerMax > 0 &&
+        this.progTimerCount >= this.progTimerMax
+      ) {
+        this.progTimerCount -= this.progTimerMax;
+        if (
+          this.isEnabled &&
+          this.lengthCounter > 0 &&
+          this.linearCounter > 0
+        ) {
+          this.clockTriangleGenerator();
+        }
+      }
+    }
+  }
+
+  clockTriangleGenerator() {
+    this.triangleCounter++;
+    this.triangleCounter &= 0x1f;
+  }
+
+  setEnabled(value) {
+    this.isEnabled = value;
+    if (!value) {
+      this.lengthCounter = 0;
+    }
+    this.updateSampleCondition();
+  }
+
+  updateSampleCondition() {
+    this.sampleCondition =
+      this.isEnabled &&
+      this.progTimerMax > 7 &&
+      this.linearCounter > 0 &&
+      this.lengthCounter > 0;
+  }
+
+  toJSON() {
+    return toJSON(this);
+  }
+
+  fromJSON(s) {
+    fromJSON(this, s);
+  }
+
+  static JSON_PROPERTIES = [
+    "isEnabled",
+    "sampleCondition",
+    "lengthCounterEnable",
+    "lcHalt",
+    "lcControl",
+    "progTimerCount",
+    "progTimerMax",
+    "triangleCounter",
+    "lengthCounter",
+    "linearCounter",
+    "lcLoadValue",
+    "sampleValue",
+    "tmp",
+  ];
+}
+
+
+
+const CPU_FREQ_NTSC = 1789772.5; //1789772.72727272d;
+// const CPU_FREQ_PAL = 1773447.4;
+
+// Frame counter step timing tables (in CPU cycles).
+// The APU frame counter fires at these specific cycle positions within each
+// sequence. On real hardware, the APU clock is half the CPU clock, so
+// these correspond to APU cycles 3728.5, 7456.5, 11185.5, 14914, 14914.5 etc.
+// In 4-step mode, the IRQ flag is set 1 CPU cycle before the clock event
+// (at 29828 vs 29829), so step 3 is split into two sub-steps.
+// See https://www.nesdev.org/wiki/APU_Frame_Counter
+const FRAME_STEPS_4 = [7457, 14913, 22371, 29828, 29829];
+// 5-step mode step 3 fires at 29829 per the nesdev wiki, not 29828. This is
+// fine because fireFrameStep step 3 in 5-step mode is a no-op (no clock or IRQ).
+const FRAME_STEPS_5 = [7457, 14913, 22371, 29829, 37281];
+const FRAME_PERIOD_4 = 29830; // Total CPU cycles for 4-step sequence
+const FRAME_PERIOD_5 = 37282; // Total CPU cycles for 5-step sequence
+
+class PAPU {
+  constructor(nes) {
+    this.nes = nes;
+
+    this.square1 = new ChannelSquare(this, true);
+    this.square2 = new ChannelSquare(this, false);
+    this.triangle = new ChannelTriangle(this);
+    this.noise = new ChannelNoise(this);
+    this.dmc = new ChannelDM(this);
+
+    this.startedPlaying = false;
+    this.recordOutput = false;
+    this.triValue = 0;
+
+    // DC removal vars:
+    this.prevSampleL = 0;
+    this.prevSampleR = 0;
+    this.smpAccumL = 0;
+    this.smpAccumR = 0;
+
+    // DAC range:
+    this.dacRange = 0;
+    this.dcValue = 0;
+
+    // Master volume:
+    this.masterVolume = 256;
+
+    // Panning:
+    this.panning = [80, 170, 100, 150, 128];
+    this.setPanning(this.panning);
+
+    // Initialize lookup tables:
+    this.initLengthLookup();
+    this.initDmcFrequencyLookup();
+    this.initNoiseWavelengthLookup();
+    this.initDACtables();
+
+    // Init sound registers:
+    for (let i = 0; i < 0x14; i++) {
+      if (i === 0x10) {
+        this.writeReg(0x4010, 0x10);
+      } else {
+        this.writeReg(0x4000 + i, 0);
+      }
+    }
+
+    this.sampleRate = this.nes.opts.sampleRate;
+    this.sampleTimerMax = Math.floor(
+      (1024.0 * CPU_FREQ_NTSC) / this.sampleRate,
+    );
+    this.sampleTimer = 0;
+    this.updateChannelEnable(0);
+    this.frameCycleCounter = 0;
+    this.frameStep = 0;
+    this.countSequence = 0;
+    this.sampleCount = 0;
+    this.frameIrqEnabled = false;
+    this.frameIrqActive = false;
+    // Deferred clearing of the frame IRQ flag: on real hardware, reading
+    // $4015 doesn't clear bit 6 immediately. The clear takes effect at the
+    // next APU "get" cycle (the APU clock runs at half the CPU rate, so
+    // get/put phases alternate every CPU cycle). This matters when $4015 is
+    // read twice in quick succession (e.g., by the SLO RMW instruction's
+    // dummy read + actual read, which are 1 CPU cycle apart). Depending on
+    // the APU phase alignment, the second read may or may not still see
+    // the flag. See AccuracyCoin test 0x0467 subtests 6 and 7.
+    // https://www.nesdev.org/wiki/APU_Frame_Counter
+    this.frameIrqClearPending = false;
+    // APU cycle parity tracks the CPU cycle count modulo 2, determining
+    // which APU half-cycle phase we're on (get or put).
+    this.apuCycleParity = 0;
+    this.accCount = 0;
+    this.smpSquare1 = 0;
+    this.smpSquare2 = 0;
+    this.smpTriangle = 0;
+    this.smpDmc = 0;
+    this.channelEnableValue = 0xff;
+    this.extraCycles = 0;
+    this.maxSample = -500000;
+    this.minSample = 500000;
+  }
+
+  // eslint-disable-next-line no-unused-vars
+  readReg(address) {
+    // Read 0x4015:
+    let tmp = 0;
+    tmp |= this.square1.getLengthStatus();
+    tmp |= this.square2.getLengthStatus() << 1;
+    tmp |= this.triangle.getLengthStatus() << 2;
+    tmp |= this.noise.getLengthStatus() << 3;
+    tmp |= this.dmc.getLengthStatus() << 4;
+    // Bit 5 is open bus (not driven by APU), comes from CPU data bus
+    // See https://www.nesdev.org/wiki/Open_bus_behavior
+    tmp |= this.nes.cpu.dataBus & 0x20;
+    // Frame interrupt flag: reflects whether the flag is set, regardless of
+    // the IRQ inhibit bit in $4017. The inhibit only prevents the IRQ from
+    // firing, not the flag from being reported.
+    tmp |= (this.frameIrqActive ? 1 : 0) << 6;
+    tmp |= this.dmc.getIrqStatus() << 7;
+
+    // Reading $4015 schedules the frame interrupt flag for clearing, but
+    // the actual clear is deferred to the next APU "get" cycle. This means
+    // if two reads happen 1 CPU cycle apart (e.g., dummy + actual read in
+    // an RMW instruction), the second read may still see the flag depending
+    // on APU clock phase alignment. The DMC interrupt flag is NOT cleared.
+    // Only schedule a clear when the flag is actually set; otherwise a stale
+    // pending clear could race with a future fireFrameStep that sets the flag.
+    // See https://www.nesdev.org/wiki/APU#Status_($4015)
+    if (this.frameIrqActive) {
+      this.frameIrqClearPending = true;
+    }
+
+    return tmp & 0xff;
+  }
+
+  writeReg(address, value) {
+    if (address >= 0x4000 && address < 0x4004) {
+      // Square Wave 1 Control
+      this.square1.writeReg(address, value);
+      // console.log("Square Write");
+    } else if (address >= 0x4004 && address < 0x4008) {
+      // Square 2 Control
+      this.square2.writeReg(address, value);
+    } else if (address >= 0x4008 && address < 0x400c) {
+      // Triangle Control
+      this.triangle.writeReg(address, value);
+    } else if (address >= 0x400c && address <= 0x400f) {
+      // Noise Control
+      this.noise.writeReg(address, value);
+    } else if (address === 0x4010) {
+      // DMC Play mode & DMA frequency
+      this.dmc.writeReg(address, value);
+    } else if (address === 0x4011) {
+      // DMC Delta Counter
+      this.dmc.writeReg(address, value);
+    } else if (address === 0x4012) {
+      // DMC Play code starting address
+      this.dmc.writeReg(address, value);
+    } else if (address === 0x4013) {
+      // DMC Play code length
+      this.dmc.writeReg(address, value);
+    } else if (address === 0x4015) {
+      // Channel enable
+      this.updateChannelEnable(value);
+
+      // DMC/IRQ Status
+      this.dmc.writeReg(address, value);
+    } else if (address === 0x4017) {
+      // Frame counter control
+      // Bit 7: sequence mode (0=4-step, 1=5-step)
+      // Bit 6: IRQ inhibit (0=IRQs enabled, 1=IRQs disabled)
+      // See https://www.nesdev.org/wiki/APU_Frame_Counter
+      this.countSequence = (value >> 7) & 1;
+      // Writing $4017 resets the frame counter's internal divider, but on
+      // real hardware the reset is delayed after the write cycle. The delay
+      // depends on the APU clock phase at the write:
+      //   "get" phase (odd parity): reset after 3 CPU cycles
+      //   "put" phase (even parity): reset after 4 CPU cycles
+      // Since the emulator clocks the full STA instruction's cycles (4 for
+      // STA absolute) after writeReg, we compensate by starting the counter
+      // negative so it reaches 0 at the true reset point.
+      // See https://www.nesdev.org/wiki/APU_Frame_Counter
+      let cpu = this.nes.cpu;
+      let pendingCycles = cpu.instrBusCycles + 1 - cpu.apuCatchupCycles;
+      let writeParity = (this.apuCycleParity + pendingCycles) & 1;
+      // "get" phase (odd): -6 → after STA (4 cycles) → -2, after 2 cycles → 0
+      // "put" phase (even): -7 → after STA (4 cycles) → -3, after 3 cycles → 0
+      this.frameCycleCounter = -7 + writeParity;
+      this.frameStep = 0;
+
+      if (value & 0x40) {
+        // IRQ inhibit set: clear the frame interrupt flag and prevent
+        // future frame IRQs from firing
+        this.frameIrqEnabled = false;
+        this.frameIrqActive = false;
+        this.frameIrqClearPending = false;
+      } else {
+        // IRQ inhibit clear: enable frame IRQs (flag is not affected)
+        this.frameIrqEnabled = true;
+      }
+
+      if (this.countSequence === 1) {
+        // 5-step mode: immediately clock all quarter-frame and half-frame
+        // units on the write cycle
+        this.clockQuarterFrame();
+        this.clockHalfFrame();
+      }
+    }
+  }
+
+  // Updates channel enable status.
+  // This is done on writes to the
+  // channel enable register (0x4015),
+  // and when the user enables/disables channels
+  // in the GUI.
+  updateChannelEnable(value) {
+    this.channelEnableValue = value & 0xffff;
+    this.square1.setEnabled((value & 1) !== 0);
+    this.square2.setEnabled((value & 2) !== 0);
+    this.triangle.setEnabled((value & 4) !== 0);
+    this.noise.setEnabled((value & 8) !== 0);
+    this.dmc.setEnabled((value & 16) !== 0);
+  }
+
+  // Clocks all APU channel timers and the frame counter by nCycles CPU cycles.
+  // Called once per instruction from the frame loop with the total cycle count.
+  // frameCounterAlreadyAdvanced is the number of frame counter cycles already
+  // advanced mid-instruction by APU catch-up (advanceFrameCounter). This is
+  // subtracted from the frame counter portion only, not from channel timers.
+  clockFrameCounter(nCycles, frameCounterAlreadyAdvanced) {
+    let frameCounterCycles = nCycles - (frameCounterAlreadyAdvanced || 0);
+
+    // Process deferred frame IRQ clear and update APU cycle parity for
+    // the remaining cycles not yet advanced by advanceFrameCounter.
+    this.processFrameIrqClear(frameCounterCycles);
+    this.apuCycleParity = (this.apuCycleParity + frameCounterCycles) & 1;
+
+    // Don't process channel ticks beyond next sampling:
+    nCycles += this.extraCycles;
+    let maxCycles = this.sampleTimerMax - this.sampleTimer;
+    if (nCycles << 10 > maxCycles) {
+      this.extraCycles = ((nCycles << 10) - maxCycles) >> 10;
+      nCycles -= this.extraCycles;
+    } else {
+      this.extraCycles = 0;
+    }
+
+    let dmc = this.dmc;
+    let triangle = this.triangle;
+    let square1 = this.square1;
+    let square2 = this.square2;
+    let noise = this.noise;
+
+    // Clock DMC:
+    if (dmc.isEnabled) {
+      dmc.shiftCounter -= nCycles << 3;
+      while (dmc.shiftCounter <= 0 && dmc.dmaFrequency > 0) {
+        dmc.shiftCounter += dmc.dmaFrequency;
+        dmc.clockDmc();
+      }
+    }
+
+    // Clock Triangle channel Prog timer:
+    if (triangle.progTimerMax > 0) {
+      triangle.progTimerCount -= nCycles;
+      while (triangle.progTimerCount <= 0) {
+        triangle.progTimerCount += triangle.progTimerMax + 1;
+        if (triangle.linearCounter > 0 && triangle.lengthCounter > 0) {
+          triangle.triangleCounter++;
+          triangle.triangleCounter &= 0x1f;
+
+          if (triangle.isEnabled) {
+            if (triangle.triangleCounter >= 0x10) {
+              // Normal value.
+              triangle.sampleValue = triangle.triangleCounter & 0xf;
+            } else {
+              // Inverted value.
+              triangle.sampleValue = 0xf - (triangle.triangleCounter & 0xf);
+            }
+            triangle.sampleValue <<= 4;
+          }
+        }
+      }
+    }
+
+    // Clock Square channel 1 Prog timer:
+    square1.progTimerCount -= nCycles;
+    if (square1.progTimerCount <= 0) {
+      square1.progTimerCount += (square1.progTimerMax + 1) << 1;
+
+      square1.squareCounter++;
+      square1.squareCounter &= 0x7;
+      square1.updateSampleValue();
+    }
+
+    // Clock Square channel 2 Prog timer:
+    square2.progTimerCount -= nCycles;
+    if (square2.progTimerCount <= 0) {
+      square2.progTimerCount += (square2.progTimerMax + 1) << 1;
+
+      square2.squareCounter++;
+      square2.squareCounter &= 0x7;
+      square2.updateSampleValue();
+    }
+
+    // Clock noise channel Prog timer:
+    let acc_c = nCycles;
+    if (noise.progTimerCount - acc_c > 0) {
+      // Do all cycles at once:
+      noise.progTimerCount -= acc_c;
+      noise.accCount += acc_c;
+      noise.accValue += acc_c * noise.sampleValue;
+    } else {
+      // Slow-step:
+      while (acc_c-- > 0) {
+        if (--noise.progTimerCount <= 0 && noise.progTimerMax > 0) {
+          // Update noise shift register:
+          noise.shiftReg <<= 1;
+          noise.tmp =
+            ((noise.shiftReg << (noise.randomMode === 0 ? 1 : 6)) ^
+              noise.shiftReg) &
+            0x8000;
+          if (noise.tmp !== 0) {
+            // Sample value must be 0.
+            noise.shiftReg |= 0x01;
+            noise.randomBit = 0;
+            noise.sampleValue = 0;
+          } else {
+            // Find sample value:
+            noise.randomBit = 1;
+            if (noise.isEnabled && noise.lengthCounter > 0) {
+              noise.sampleValue = noise.masterVolume;
+            } else {
+              noise.sampleValue = 0;
+            }
+          }
+
+          noise.progTimerCount += noise.progTimerMax;
+        }
+
+        noise.accValue += noise.sampleValue;
+        noise.accCount++;
+      }
+    }
+
+    // Frame IRQ handling:
+    if (this.frameIrqEnabled && this.frameIrqActive) {
+      this.nes.cpu.requestIrq(this.nes.cpu.IRQ_NORMAL);
+    }
+
+    // Clock frame counter: fire steps at the correct CPU cycle positions.
+    // Uses the uncapped cycle count to maintain accurate timing.
+    this._advanceFrameSteps(frameCounterCycles);
+
+    // Accumulate sample value:
+    this.accSample(nCycles);
+
+    // Clock sample timer:
+    this.sampleTimer += nCycles << 10;
+    if (this.sampleTimer >= this.sampleTimerMax) {
+      // Sample channels:
+      this.sample();
+      this.sampleTimer -= this.sampleTimerMax;
+    }
+  }
+
+  // Process the deferred frame IRQ flag clear. On real hardware, reading
+  // $4015 schedules the clear for the next APU "get" cycle (which happens
+  // every 2 CPU cycles). If the current APU phase is "put" (parity 0),
+  // the next "get" is 1 cycle away. If "get" (parity 1), it's 2 cycles
+  // away. This must be called BEFORE updating apuCycleParity for the
+  // current advance, so it sees the parity at the start of the period.
+  // See https://www.nesdev.org/wiki/APU_Frame_Counter
+  processFrameIrqClear(nCycles) {
+    if (!this.frameIrqClearPending || nCycles <= 0) return;
+    // Determine how many CPU cycles until the next APU "get" boundary.
+    let cyclesToNextGet = (this.apuCycleParity & 1) === 0 ? 1 : 2;
+    if (nCycles >= cyclesToNextGet) {
+      this.frameIrqActive = false;
+      this.frameIrqClearPending = false;
+    }
+  }
+
+  // Advance only the frame counter steps without clocking channel timers,
+  // DMC, or audio sampling. Used by CPU APU catch-up to update frame counter
+  // state (length counters, envelopes) before $4015 reads, without disturbing
+  // DMC DMA timing or audio generation.
+  advanceFrameCounter(nCycles) {
+    this.processFrameIrqClear(nCycles);
+    this.apuCycleParity = (this.apuCycleParity + nCycles) & 1;
+    this._advanceFrameSteps(nCycles);
+  }
+
+  // Advance frame counter steps and handle period wrap. Shared by both
+  // clockFrameCounter (full APU tick) and advanceFrameCounter (catch-up only).
+  // The step loop and period wrap are separated: steps fire when the counter
+  // reaches each step's cycle position, and the period wrap only occurs when
+  // the counter reaches the full period length (not immediately after the
+  // last step). This matters because in 4-step mode, the last step fires at
+  // 29829 but the period wrap (and 3rd IRQ assertion) occurs at 29830.
+  // See https://www.nesdev.org/wiki/APU_Frame_Counter
+  _advanceFrameSteps(frameCounterCycles) {
+    this.frameCycleCounter += frameCounterCycles;
+    let steps = this.countSequence === 0 ? FRAME_STEPS_4 : FRAME_STEPS_5;
+    let period = this.countSequence === 0 ? FRAME_PERIOD_4 : FRAME_PERIOD_5;
+    for (;;) {
+      if (
+        this.frameStep < steps.length &&
+        this.frameCycleCounter >= steps[this.frameStep]
+      ) {
+        this.fireFrameStep(this.frameStep);
+        this.frameStep++;
+      } else if (
+        this.frameStep >= steps.length &&
+        this.frameCycleCounter >= period
+      ) {
+        // Period wrap: reset the frame counter for the next sequence.
+        this.frameStep = 0;
+        this.frameCycleCounter -= period;
+        // In 4-step mode, the IRQ flag is asserted for 3 consecutive CPU
+        // cycles: at 29828 (step 3), 29829 (step 4), and 29830 (period wrap).
+        // On the 3rd cycle (period wrap), the flag is set only if the IRQ
+        // inhibit flag is clear. If inhibit is set, the flag is actively
+        // cleared (it was unconditionally set on cycles 29828-29829).
+        // See https://www.nesdev.org/wiki/APU_Frame_Counter
+        if (this.countSequence === 0) {
+          this.frameIrqActive = this.frameIrqEnabled;
+          this.frameIrqClearPending = false;
+        }
+      } else {
+        break;
+      }
+    }
+  }
+
+  accSample(cycles) {
+    // Special treatment for triangle channel - need to interpolate.
+    if (this.triangle.sampleCondition) {
+      this.triValue = Math.floor(
+        (this.triangle.progTimerCount << 4) / (this.triangle.progTimerMax + 1),
+      );
+      if (this.triValue > 16) {
+        this.triValue = 16;
+      }
+      if (this.triangle.triangleCounter >= 16) {
+        this.triValue = 16 - this.triValue;
+      }
+
+      // Add non-interpolated sample value:
+      this.triValue += this.triangle.sampleValue;
+    }
+
+    // Now sample normally:
+    if (cycles === 2) {
+      this.smpTriangle += this.triValue << 1;
+      this.smpDmc += this.dmc.sample << 1;
+      this.smpSquare1 += this.square1.sampleValue << 1;
+      this.smpSquare2 += this.square2.sampleValue << 1;
+      this.accCount += 2;
+    } else if (cycles === 4) {
+      this.smpTriangle += this.triValue << 2;
+      this.smpDmc += this.dmc.sample << 2;
+      this.smpSquare1 += this.square1.sampleValue << 2;
+      this.smpSquare2 += this.square2.sampleValue << 2;
+      this.accCount += 4;
+    } else {
+      this.smpTriangle += cycles * this.triValue;
+      this.smpDmc += cycles * this.dmc.sample;
+      this.smpSquare1 += cycles * this.square1.sampleValue;
+      this.smpSquare2 += cycles * this.square2.sampleValue;
+      this.accCount += cycles;
+    }
+  }
+
+  // Fire a frame counter step. Each step clocks different APU units depending
+  // on the mode and step number.
+  // See https://www.nesdev.org/wiki/APU_Frame_Counter
+  fireFrameStep(step) {
+    if (this.countSequence === 0) {
+      // Mode 0 (4-step):
+      //   Step 0 (7457): quarter frame (envelope + linear counter)
+      //   Step 1 (14913): half frame (quarter + length counter + sweep)
+      //   Step 2 (22371): quarter frame
+      //   Step 3 (29828): set frame IRQ flag only (1 cycle before clock)
+      //   Step 4 (29829): half frame + set frame IRQ flag
+      // On real hardware, the IRQ flag is asserted 1 CPU cycle before the
+      // clock event at the end of the 4-step sequence. This is why step 3
+      // is split from step 4.
+      // See https://www.nesdev.org/wiki/APU_Frame_Counter
+      switch (step) {
+        case 0:
+          this.clockQuarterFrame();
+          break;
+        case 1:
+          this.clockQuarterFrame();
+          this.clockHalfFrame();
+          break;
+        case 2:
+          this.clockQuarterFrame();
+          break;
+        case 3:
+          // IRQ flag is UNCONDITIONALLY set 1 CPU cycle before the half-frame
+          // clock, regardless of the IRQ inhibit flag ($4017 bit 6). On real
+          // hardware, the flag is driven high by the frame counter output for
+          // cycles 29828-29829 even when inhibit is set; only the period wrap
+          // at 29830 respects the inhibit flag. Cancel any pending deferred
+          // clear since the flag is being re-asserted by hardware.
+          // See AccuracyCoin tests I-L.
+          this.frameIrqActive = true;
+          this.frameIrqClearPending = false;
+          break;
+        case 4:
+          this.clockQuarterFrame();
+          this.clockHalfFrame();
+          // IRQ flag continues to be unconditionally asserted on this cycle.
+          this.frameIrqActive = true;
+          this.frameIrqClearPending = false;
+          break;
+      }
+    } else {
+      // Mode 1 (5-step):
+      //   Step 0: quarter frame
+      //   Step 1: half frame
+      //   Step 2: quarter frame
+      //   Step 3: nothing (no clocking, no IRQ)
+      //   Step 4: half frame
+      switch (step) {
+        case 0:
+          this.clockQuarterFrame();
+          break;
+        case 1:
+          this.clockQuarterFrame();
+          this.clockHalfFrame();
+          break;
+        case 2:
+          this.clockQuarterFrame();
+          break;
+        case 3:
+          // Nothing happens at step 4 in 5-step mode
+          break;
+        case 4:
+          this.clockQuarterFrame();
+          this.clockHalfFrame();
+          break;
+      }
+    }
+  }
+
+  // Quarter frame: clock envelopes and triangle linear counter (~240Hz)
+  clockQuarterFrame() {
+    this.square1.clockEnvDecay();
+    this.square2.clockEnvDecay();
+    this.noise.clockEnvDecay();
+    this.triangle.clockLinearCounter();
+  }
+
+  // Half frame: clock length counters and sweep units (~120Hz)
+  clockHalfFrame() {
+    this.triangle.clockLengthCounter();
+    this.square1.clockLengthCounter();
+    this.square2.clockLengthCounter();
+    this.noise.clockLengthCounter();
+    this.square1.clockSweep();
+    this.square2.clockSweep();
+  }
+
+  // Samples the channels, mixes the output together, then writes to buffer.
+  sample() {
+    let sq_index, tnd_index;
+
+    if (this.accCount > 0) {
+      this.smpSquare1 <<= 4;
+      this.smpSquare1 = Math.floor(this.smpSquare1 / this.accCount);
+
+      this.smpSquare2 <<= 4;
+      this.smpSquare2 = Math.floor(this.smpSquare2 / this.accCount);
+
+      this.smpTriangle = Math.floor(this.smpTriangle / this.accCount);
+
+      this.smpDmc <<= 4;
+      this.smpDmc = Math.floor(this.smpDmc / this.accCount);
+
+      this.accCount = 0;
+    } else {
+      this.smpSquare1 = this.square1.sampleValue << 4;
+      this.smpSquare2 = this.square2.sampleValue << 4;
+      this.smpTriangle = this.triangle.sampleValue;
+      this.smpDmc = this.dmc.sample << 4;
+    }
+
+    let smpNoise = Math.floor((this.noise.accValue << 4) / this.noise.accCount);
+    this.noise.accValue = smpNoise >> 4;
+    this.noise.accCount = 1;
+
+    // Stereo sound.
+
+    // Left channel:
+    sq_index =
+      (this.smpSquare1 * this.stereoPosLSquare1 +
+        this.smpSquare2 * this.stereoPosLSquare2) >>
+      8;
+    tnd_index =
+      (3 * this.smpTriangle * this.stereoPosLTriangle +
+        (smpNoise << 1) * this.stereoPosLNoise +
+        this.smpDmc * this.stereoPosLDMC) >>
+      8;
+    if (sq_index >= this.square_table.length) {
+      sq_index = this.square_table.length - 1;
+    }
+    if (tnd_index >= this.tnd_table.length) {
+      tnd_index = this.tnd_table.length - 1;
+    }
+    let sampleValueL =
+      this.square_table[sq_index] + this.tnd_table[tnd_index] - this.dcValue;
+
+    // Right channel:
+    sq_index =
+      (this.smpSquare1 * this.stereoPosRSquare1 +
+        this.smpSquare2 * this.stereoPosRSquare2) >>
+      8;
+    tnd_index =
+      (3 * this.smpTriangle * this.stereoPosRTriangle +
+        (smpNoise << 1) * this.stereoPosRNoise +
+        this.smpDmc * this.stereoPosRDMC) >>
+      8;
+    if (sq_index >= this.square_table.length) {
+      sq_index = this.square_table.length - 1;
+    }
+    if (tnd_index >= this.tnd_table.length) {
+      tnd_index = this.tnd_table.length - 1;
+    }
+    let sampleValueR =
+      this.square_table[sq_index] + this.tnd_table[tnd_index] - this.dcValue;
+
+    // Remove DC from left channel:
+    let smpDiffL = sampleValueL - this.prevSampleL;
+    this.prevSampleL += smpDiffL;
+    this.smpAccumL += smpDiffL - (this.smpAccumL >> 10);
+    sampleValueL = this.smpAccumL;
+
+    // Remove DC from right channel:
+    let smpDiffR = sampleValueR - this.prevSampleR;
+    this.prevSampleR += smpDiffR;
+    this.smpAccumR += smpDiffR - (this.smpAccumR >> 10);
+    sampleValueR = this.smpAccumR;
+
+    // Write:
+    if (sampleValueL > this.maxSample) {
+      this.maxSample = sampleValueL;
+    }
+    if (sampleValueL < this.minSample) {
+      this.minSample = sampleValueL;
+    }
+
+    if (this.nes.opts.onAudioSample) {
+      this.nes.opts.onAudioSample(sampleValueL / 32768, sampleValueR / 32768);
+    }
+
+    // Reset sampled values:
+    this.smpSquare1 = 0;
+    this.smpSquare2 = 0;
+    this.smpTriangle = 0;
+    this.smpDmc = 0;
+  }
+
+  getLengthMax(value) {
+    return this.lengthLookup[value >> 3];
+  }
+
+  getDmcFrequency(value) {
+    if (value >= 0 && value < 0x10) {
+      return this.dmcFreqLookup[value];
+    }
+    return 0;
+  }
+
+  getNoiseWaveLength(value) {
+    if (value >= 0 && value < 0x10) {
+      return this.noiseWavelengthLookup[value];
+    }
+    return 0;
+  }
+
+  // Recalculate the sample timer for a non-standard host frame rate.
+  // At 60fps the timer fires once per (CPU_FREQ / sampleRate) cycles. If the
+  // host calls frame() at a different rate, scale proportionally so the total
+  // audio output per second stays constant.
+  setFrameRate(rate) {
+    this.sampleTimerMax = Math.floor(
+      (1024.0 * CPU_FREQ_NTSC * rate) / (this.sampleRate * 60.0),
+    );
+  }
+
+  setPanning(pos) {
+    for (let i = 0; i < 5; i++) {
+      this.panning[i] = pos[i];
+    }
+    this.updateStereoPos();
+  }
+
+  setMasterVolume(value) {
+    if (value < 0) {
+      value = 0;
+    }
+    if (value > 256) {
+      value = 256;
+    }
+    this.masterVolume = value;
+    this.updateStereoPos();
+  }
+
+  updateStereoPos() {
+    this.stereoPosLSquare1 = (this.panning[0] * this.masterVolume) >> 8;
+    this.stereoPosLSquare2 = (this.panning[1] * this.masterVolume) >> 8;
+    this.stereoPosLTriangle = (this.panning[2] * this.masterVolume) >> 8;
+    this.stereoPosLNoise = (this.panning[3] * this.masterVolume) >> 8;
+    this.stereoPosLDMC = (this.panning[4] * this.masterVolume) >> 8;
+
+    this.stereoPosRSquare1 = this.masterVolume - this.stereoPosLSquare1;
+    this.stereoPosRSquare2 = this.masterVolume - this.stereoPosLSquare2;
+    this.stereoPosRTriangle = this.masterVolume - this.stereoPosLTriangle;
+    this.stereoPosRNoise = this.masterVolume - this.stereoPosLNoise;
+    this.stereoPosRDMC = this.masterVolume - this.stereoPosLDMC;
+  }
+
+  initLengthLookup() {
+    // prettier-ignore
+    this.lengthLookup = [
+            0x0A, 0xFE,
+            0x14, 0x02,
+            0x28, 0x04,
+            0x50, 0x06,
+            0xA0, 0x08,
+            0x3C, 0x0A,
+            0x0E, 0x0C,
+            0x1A, 0x0E,
+            0x0C, 0x10,
+            0x18, 0x12,
+            0x30, 0x14,
+            0x60, 0x16,
+            0xC0, 0x18,
+            0x48, 0x1A,
+            0x10, 0x1C,
+            0x20, 0x1E
+        ];
+  }
+
+  initDmcFrequencyLookup() {
+    this.dmcFreqLookup = new Array(16);
+
+    this.dmcFreqLookup[0x0] = 0xd60;
+    this.dmcFreqLookup[0x1] = 0xbe0;
+    this.dmcFreqLookup[0x2] = 0xaa0;
+    this.dmcFreqLookup[0x3] = 0xa00;
+    this.dmcFreqLookup[0x4] = 0x8f0;
+    this.dmcFreqLookup[0x5] = 0x7f0;
+    this.dmcFreqLookup[0x6] = 0x710;
+    this.dmcFreqLookup[0x7] = 0x6b0;
+    this.dmcFreqLookup[0x8] = 0x5f0;
+    this.dmcFreqLookup[0x9] = 0x500;
+    this.dmcFreqLookup[0xa] = 0x470;
+    this.dmcFreqLookup[0xb] = 0x400;
+    this.dmcFreqLookup[0xc] = 0x350;
+    this.dmcFreqLookup[0xd] = 0x2a0;
+    this.dmcFreqLookup[0xe] = 0x240;
+    this.dmcFreqLookup[0xf] = 0x1b0;
+    //for(int i=0;i<16;i++)dmcFreqLookup[i]/=8;
+  }
+
+  initNoiseWavelengthLookup() {
+    this.noiseWavelengthLookup = new Array(16);
+
+    this.noiseWavelengthLookup[0x0] = 0x004;
+    this.noiseWavelengthLookup[0x1] = 0x008;
+    this.noiseWavelengthLookup[0x2] = 0x010;
+    this.noiseWavelengthLookup[0x3] = 0x020;
+    this.noiseWavelengthLookup[0x4] = 0x040;
+    this.noiseWavelengthLookup[0x5] = 0x060;
+    this.noiseWavelengthLookup[0x6] = 0x080;
+    this.noiseWavelengthLookup[0x7] = 0x0a0;
+    this.noiseWavelengthLookup[0x8] = 0x0ca;
+    this.noiseWavelengthLookup[0x9] = 0x0fe;
+    this.noiseWavelengthLookup[0xa] = 0x17c;
+    this.noiseWavelengthLookup[0xb] = 0x1fc;
+    this.noiseWavelengthLookup[0xc] = 0x2fa;
+    this.noiseWavelengthLookup[0xd] = 0x3f8;
+    this.noiseWavelengthLookup[0xe] = 0x7f2;
+    this.noiseWavelengthLookup[0xf] = 0xfe4;
+  }
+
+  initDACtables() {
+    let value, ival, i;
+    let max_sqr = 0;
+    let max_tnd = 0;
+
+    this.square_table = new Array(32 * 16);
+    this.tnd_table = new Array(204 * 16);
+
+    for (i = 0; i < 32 * 16; i++) {
+      value = 95.52 / (8128.0 / (i / 16.0) + 100.0);
+      value *= 0.98411;
+      value *= 50000.0;
+      ival = Math.floor(value);
+
+      this.square_table[i] = ival;
+      if (ival > max_sqr) {
+        max_sqr = ival;
+      }
+    }
+
+    for (i = 0; i < 204 * 16; i++) {
+      value = 163.67 / (24329.0 / (i / 16.0) + 100.0);
+      value *= 0.98411;
+      value *= 50000.0;
+      ival = Math.floor(value);
+
+      this.tnd_table[i] = ival;
+      if (ival > max_tnd) {
+        max_tnd = ival;
+      }
+    }
+
+    this.dacRange = max_sqr + max_tnd;
+    this.dcValue = this.dacRange / 2;
+  }
+
+  toJSON() {
+    let obj = toJSON(this);
+    obj.dmc = this.dmc.toJSON();
+    obj.noise = this.noise.toJSON();
+    obj.square1 = this.square1.toJSON();
+    obj.square2 = this.square2.toJSON();
+    obj.triangle = this.triangle.toJSON();
+    return obj;
+  }
+
+  fromJSON(s) {
+    fromJSON(this, s);
+    this.dmc.fromJSON(s.dmc);
+    this.noise.fromJSON(s.noise);
+    this.square1.fromJSON(s.square1);
+    this.square2.fromJSON(s.square2);
+    this.triangle.fromJSON(s.triangle);
+  }
+
+  static JSON_PROPERTIES = [
+    "channelEnableValue",
+    "sampleRate",
+    "frameIrqEnabled",
+    "frameIrqActive",
+    "frameIrqClearPending",
+    "apuCycleParity",
+    "startedPlaying",
+    "recordOutput",
+    "frameCycleCounter",
+    "frameStep",
+    "countSequence",
+    "sampleTimer",
+    "sampleTimerMax",
+    "sampleCount",
+    "triValue",
+    "smpSquare1",
+    "smpSquare2",
+    "smpTriangle",
+    "smpDmc",
+    "accCount",
+    "prevSampleL",
+    "prevSampleR",
+    "smpAccumL",
+    "smpAccumR",
+    "masterVolume",
+    "stereoPosLSquare1",
+    "stereoPosLSquare2",
+    "stereoPosLTriangle",
+    "stereoPosLNoise",
+    "stereoPosLDMC",
+    "stereoPosRSquare1",
+    "stereoPosRSquare2",
+    "stereoPosRTriangle",
+    "stereoPosRNoise",
+    "stereoPosRDMC",
+    "extraCycles",
+    "maxSample",
+    "minSample",
+    "panning",
+  ];
+}
+
+
+return PAPU;
+})();
+
+;
+// AudioWorklet output. Only PCM buffering/rendering runs on the audio thread;
+// the APU must remain synchronized with CPU register reads, DMC DMA and IRQs.
+var audio_context=null,audio_node=null,audio_loading=null,audio_playing=false,
+    audio_enabled=true,audio_volume=0.7,audio_batch_pos=0,audio_stream=0,
+    audio_batch_l=new Float32Array(128),audio_batch_r=new Float32Array(128);
+
+var audio_status=message=>{
+  var element=document.getElementById('audioStatus');
+  if(element)element.textContent=message;
+};
+var audio_prepare=()=>{
+  if(audio_loading)return audio_loading;
+  if(!window.AudioContext||!window.AudioWorkletNode||!window.isSecureContext){
+    return Promise.reject(new Error('AudioWorklet needs a modern browser and a secure context.'));
+  }
+  audio_context=new AudioContext({latencyHint:'interactive'});
+  // Invoke resume in the original gesture; do not block ROM loading if policy
+  // leaves this promise pending until the next explicit click.
+  audio_context.resume().catch(()=>{});
+  audio_loading=(async()=>{
+    // file:// has an opaque origin in Chromium: blob:null worklet loads can
+    // fail CORS. An inline data module also works when this HTML is opened locally.
+    var url='data:application/javascript,'+encodeURIComponent(audio_worklet_source);
+    try{
+      await audio_context.audioWorklet.addModule(url);
+      audio_node=new AudioWorkletNode(audio_context,'lite-nes-audio',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[2]});
+      audio_node.port.onmessage=event=>{
+        var message=event.data;
+        if(message[0]===4)audio_refill(message[1],message[2]);
+      };
+      audio_node.onprocessorerror=()=>{audio_status('Audio stopped. Reload the page to retry.');};
+      audio_node.connect(audio_context.destination);
+      audio_node.port.postMessage([1,audio_playing,audio_stream]);
+      audio_set_volume();
+      apu_set_sample_rate(audio_context.sampleRate);
+      audio_status(audio_context.state==='running'?'Audio ready':'Click Enable audio');
+    }catch(error){
+      audio_context.close().catch(()=>{});audio_context=null;audio_node=null;audio_loading=null;
+      throw error;
+    }
+  })();
+  return audio_loading;
+};
+var audio_resume=async()=>{
+  try{
+    await audio_prepare();
+    await audio_context.resume();
+    audio_status('Audio ready');
+  }catch(error){audio_status(error.message);}
+};
+var audio_set_playing=playing=>{
+  audio_playing=playing;audio_batch_pos=0;
+  audio_stream++;
+  if(audio_node)audio_node.port.postMessage([1,playing,audio_stream]);
+};
+var audio_set_volume=()=>{
+  if(audio_node)audio_node.port.postMessage([2,audio_enabled?audio_volume:0]);
+};
+var audio_flush=()=>{
+  if(audio_batch_pos&&audio_node&&audio_playing){
+    var left=audio_batch_l.slice(0,audio_batch_pos),right=audio_batch_r.slice(0,audio_batch_pos);
+    audio_node.port.postMessage([0,left,right,audio_stream],[left.buffer,right.buffer]);
+  }
+  audio_batch_pos=0;
+};
+var audio_sample=(left,right)=>{
+  if(!audio_node||!audio_playing)return;
+  audio_batch_l[audio_batch_pos]=left;audio_batch_r[audio_batch_pos]=right;
+  if(++audio_batch_pos===audio_batch_l.length)audio_flush();
+};
+
+// Like JSNES FrameTimer.generateFrame(), extra audio frames advance the host
+// deadline. The scheduled loop must not generate the same time span twice.
+var audio_refill=(stream,queued)=>{
+  if(stream!==audio_stream||!audio_playing||!audio_node||NES.loop===null)return;
+  var rate=audio_context.sampleRate;
+  var target=Math.min(6144,Math.ceil(rate*.085/128)*128);
+  var frames=Math.max(1,Math.min(3,Math.ceil((target-queued+rate*.008)/(rate/NES.fps))));
+  try{
+    clearTimeout(NES.loop);
+    for(var index=0;index<frames;index++)NES.frame();
+    NES.nextFrameAt+=frames*NES.frameTime;
+    NES.loop=setTimeout(NES.next_frame,Math.max(0,NES.nextFrameAt-performance.now()));
+  }finally{
+    if(audio_node)audio_node.port.postMessage([5,stream]);
+  }
+};
+
+;
+// Bridge the unmodified JSNES APU to jsnes-lite's CPU, mapper bus and worklet.
+var apu_device=null,apu_bus=0,apu_catchup_cycles=0,apu_stalls=0;
+var apu_host={
+  opts:{sampleRate:44100,onAudioSample:(left,right)=>audio_sample(left,right)},
+  cpu:{
+    IRQ_NORMAL:0,dataBus:0,instrBusCycles:0,apuCatchupCycles:0,
+    // IRQ is polled as a level below rather than losing a request while masked.
+    requestIrq:()=>{},
+    haltCycles:cycles=>{apu_stalls+=cycles;}
+  },
+  mmap:{load:address=>{apu_bus=memory_read(address);return apu_bus;}}
+};
+var apu_set_sample_rate=rate=>{
+  apu_host.opts.sampleRate=rate;
+  if(apu_device){apu_device.sampleRate=rate;apu_device.setFrameRate(60);}
+};
+var apu_reset=()=>{
+  apu_stalls=apu_catchup_cycles=apu_bus=0;
+  apu_host.cpu.dataBus=apu_host.cpu.instrBusCycles=apu_host.cpu.apuCatchupCycles=0;
+  apu_host.opts.sampleRate=audio_context?audio_context.sampleRate:44100;
+  apu_device=new JSNESPAPU(apu_host);
+  audio_set_playing(false);
+};
+var apu_clock=cycles=>{
+  if(apu_device){
+    apu_device.clockFrameCounter(cycles,apu_catchup_cycles);
+    apu_catchup_cycles=0;apu_host.cpu.apuCatchupCycles=0;
+  }
+};
+var apu_read=()=>{
+  if(!apu_device)return 0;
+  var elapsed=Math.max(0,c-apu_catchup_cycles);
+  if(elapsed)apu_device.advanceFrameCounter(elapsed);
+  apu_catchup_cycles+=elapsed;
+  apu_host.cpu.apuCatchupCycles=apu_catchup_cycles;
+  apu_host.cpu.dataBus=apu_bus;
+  return apu_device.readReg(0x4015);
+};
+var apu_write=(address,value)=>{
+  if(!apu_device)return;
+  apu_host.cpu.instrBusCycles=c;
+  apu_host.cpu.apuCatchupCycles=apu_catchup_cycles;
+  apu_device.writeReg(address,value&255);
+};
+var apu_irq_pending=()=>apu_device&&(
+  (apu_device.frameIrqEnabled&&apu_device.frameIrqActive)||apu_device.dmc.irqGenerated
+);
+var cpu_bus_read=address=>{
+  var value=memory_read(address);
+  if((address&65535)!==0x4015)apu_bus=value;
+  return value;
+};
+
+;
+// PPU
+// ===
+
+// Resources:
+// - https://wiki.nesdev.com/w/index.php/PPU (+ subpages)
+// - https://problemkaputt.de/everynes.htm#pictureprocessingunitppu
+// - https://austinmorlan.com/posts/nes_rendering_overview/
+// - https://www.gridbugs.org/zelda-screen-transitions-are-undefined-behaviour/
+// - https://www.youtube.com/watch?v=wfrNnwJrujw
+// - https://gist.githubusercontent.com/adamveld12/d0398717145a2c8dedab/raw/750246a2b4ee4bb722c2b5bb5e6ba997cdf74661/spec.md
+// - https://emulation.gametechwiki.com/index.php/Famicom_Color_Palette
+// - http://forums.nesdev.com/viewtopic.php?t=19259
+// - http://forums.nesdev.com/viewtopic.php?t=8214
+// - https://www.youtube.com/watch?v=wt73KPS_23w
+
+// PPU memory map (64KB):
+
+// +-------------+-------+-----------------------------------------------------------+
+// | Address     | Size  | Use                                                       |
+// +-------------+-------+-----------------------------------------------------------+
+// | $0000-$1FFF | 8KB   | Cartridge space (CHR-ROM or CHR-RAM):                     |
+// | $0000-$0FFF | 4KB   | Pattern Table 0 (256 tiles) "left page"                   |
+// | $1000-$1FFF | 4KB   | Pattern Table 1 (256 tiles) "right page"                  |
+// +-------------+-------+-----------------------------------------------------------+
+// | $2000-$2FFF | 4KB   | VRAM (2KB in the NES, 2KB in the cartridge or mirrored):  |
+// | $2000-$23BF | 960B  | Name Table 0                                              |
+// | $23C0-$23FF | 24B   | Attribute Table 0                                         |
+// | $2400-$27BF | 960B  | Name Table 1                                              |
+// | $27C0-$27FF | 24B   | Attribute Table 1                                         |
+// | $2800-$2BBF | 960B  | Name Table 2                                              |
+// | $2BC0-$2BFF | 24B   | Attribute Table 2                                         |
+// | $2C00-$2FBF | 960B  | Name Table 3                                              |
+// | $2FC0-$2FFF | 24B   | Attribute Table 3                                         |
+// +- - - - - - -+- - - -+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -+
+// | $3000-$3EFF | 3840B | Mirror of $2000-$2EFF (never used by the PPU)             |
+// +-------------+-------+-----------------------------------------------------------+
+// | $3F00-$3F1F | 32B   | Palettes:                                                 |
+// | $3F00       | 1B    | Universal background color                                |
+// | $3F01-$3F03 | 3B    | Background palette 0                                      |
+// | $3F04       | 1B    | Universal bg color replaces it except in forced blanking  |
+// | $3F05-$3F07 | 3B    | Background palette 1                                      |
+// | $3F08       | 1B    | Universal bg color replaces it except in forced blanking  |
+// | $3F09-$3F0B | 3B    | Background palette 2                                      |
+// | $3F0C       | 1B    | Universal bg color replaces it except in forced blanking  |
+// | $3F0D-$3F0F | 3B    | Background palette 3                                      |
+// | $3F10       | 1B    | Mirror of $3F00                                           |
+// | $3F11-$3F13 | 3B    | Sprite palette 0                                          |
+// | $3F14       | 1B    | N/A (mirror of $3F04)                                     |
+// | $3F15-$3F17 | 3B    | Sprite palette 1                                          |
+// | $3F18       | 1B    | N/A (mirror of $3F08)                                     |
+// | $3F19-$3F1B | 3B    | Sprite palette 2                                          |
+// | $3F1C       | 1B    | N/A (mirror of $3F0C)                                     |
+// | $3F1D-$3F1F | 3B    | Sprite palette 3                                          |
+// +- - - - - - -+- - - -+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -+
+// | $3F20-$3FFF | 224B  | Mirrors of $3F00-$3F1F                                    |
+// +-------------+-------+-----------------------------------------------------------+
+// | $4000-$FFFF | 48KB  | Mirrors of $0000-$3FFF                                    |
+// +-------------+-------+-----------------------------------------------------------+
+
+// OAM Memory (256 bytes):
+
+// +-------------+-------+-----------------------------------------------------------+
+// | Address     | Size  | Use                                                       |
+// +-------------+-------+-----------------------------------------------------------+
+// | $00-$FF     | 256B  | Sprites properties (4 bytes for each)                     |
+// +-------------+-------+-----------------------------------------------------------+
+
+// Rendering beam for each frame (one pixel for each PPU tick):
+
+//         x=0                 x=256               x=340
+//      ---+-------------------+-------------------+
+//  y=0    | visible area      | Horizontal blank  |
+//         | (this is rendered | (prepare sprites  |
+//  y=239  | on the screen)    | for the next      |
+//  y=239  |                   | scanline)         |
+//      ---+-------------------+-------------------+
+//  y=240  | idle scanline                         |
+//      ---+---------------------------------------+
+//  y=241  | vertical blanking (idle)              |
+//         | - 20 scanlines long on NTSC consoles  |
+//  y=260  | - 70 scanlines on PAL consoles        |
+//      ---+-------------------------------------+-+
+//  y=261  | pre-render scanline                 |*|
+//  or -1 -+-------------------------------------+-+
+
+// Globals
+// -------
+
+var
+t,
+o,
+scanline,
+dot,
+PPU_mem,
+OAM,
+vramPixelBuffer,
+V_yyy,
+V_NN,
+V_YYYYY,
+V_XXXXX,
+T_yyy,
+T_NN,
+T_YYYYY,
+T_XXXXX,
+xxx, 
+scroll_x,
+scroll_y,
+PPUDATA_read_buffer,
+PPUSTATUS_O,
+PPUSTATUS_S,
+PPUSTATUS_V,
+latch,
+PPUCTRL_V,
+PPUCTRL_H,
+PPUCTRL_B,
+PPUCTRL_S,
+PPUCTRL_I,
+PPUMASK_s,
+PPUMASK_b,
+OAMADDR,
+PPUADDR,
+endFrame,
+
+  
+// System palette
+// An array of 64 RGB colors, inspired by the 3DS VC palette, stored in AABBGGRR format.
+systemPalette = (
+    "777812a0090470810a00a007024040050130531000000000"+
+    "bbbe70e32f08b0b50e02d04c0780900a0390880111000000"+
+    "ffffb3f95f8af7fb7f67f39f3bf1d84d49f5de0333000000"+
+    "ffffeafdcfcdfcfdcfbbfadfaefafebfacfbff9888000000"
+  )
+  .match(/.../g)
+  .map(c => +("0xff" + c[0] + c[0] + c[1] + c[1] + c[2] + c[2])),
+
+// Reset the PPU
+ppu_reset = () => {
+
+  // Reset PPU memory (64KB) and OAM memory (256b)
+  PPU_mem = [];
+  OAM = [];
+  
+  // Coordinates of the current pixel
+  scanline =  // Y between 0 and 261 on NTSC (or 311 on PAL)
+  dot =       // X between 0 and 340 (on scanline 261, alternate between 239 and 240 if background rendering is enabled)
+  
+  // PPU scrolling is handled via two 15-bit registers called V and T
+  // In these registers:
+  // - bits 0-4 (XXXXX) represent the coarse X scrolling
+  // - bits 5-9 (YYYYY) represent the coarse Y scrolling
+  // - bits 10-11 (NN) represent the nametable where the scrolling starts
+  // - bits 12-14 (yyy) represent the fine Y scrolling
+  // The fine X scrolling (xxx) is stored separately
+  // The effective X scrolling is equal to: (NN & 0b1) * 256 + XXXXX * 8 + xxx
+  // The effective Y scrolling is equal to: (NN >> 1) * 240 + YYYYY * 8 + yyy
+  
+  // V: value of scroll on the next scanline (V = 0yyyNNYYYYYXXXXX)
+  V_yyy = 
+  V_NN = 
+  V_YYYYY = 
+  V_XXXXX = 
+  
+  // T: value of scroll on current scanline (T = 0yyyNNYYYYYXXXXX)
+  T_yyy = 
+  T_NN = 
+  T_YYYYY = 
+  T_XXXXX = 
+
+  // Fine X scroll (xxx, also called w)
+  xxx = 
+  
+  // Effective PPU scroll
+  scroll_x = 
+  scroll_y = 
+  
+  // PPU Status register
+  PPUSTATUS_O =
+  PPUSTATUS_S =
+  PPUSTATUS_V =
+  
+  // PPU latch (also called w)
+  // It's toggled between 0 and 1 every time PPUSCROLL or PPUADDR get written, and reset to 0 when PPUSTATUS is read
+  latch = 0;
+
+  // Reset PPUCTRL and PPUMASK registers
+  set_PPUCTRL(0);
+  set_PPUMASK(0);
+},
+
+// Memory access
+// -------------
+
+// Handle address mirrorings
+mirrorAddress = address => {
+  address &= 0x3FFF;
+  if(address >= 0x3F00){
+    address = 0x3F00 | (address & 31);
+    if((address & 0x13) === 0x10) address -= 16;
+    return address;
+  }
+  if(address >= 0x3000) address -= 0x1000;
+  if(address >= 0x2000){
+    var page = (address >> 10) & 3;
+    if(NES.mirroring === 0) page &= 1;
+    else if(NES.mirroring === 1) page >>= 1;
+    else if(NES.mirroring === 3) page = 0;
+    else if(NES.mirroring === 4) page = 1;
+    address = 0x2000 | (page << 10) | (address & 1023);
+  }
+  return address;
+},
+
+// Read a byte in memory
+ppu_read = address => {
+  address &= 0x3FFF;
+  
+  // $0000-$1FFF: CHR-ROM/RAM
+  if(address < 0x2000){
+    return mapper_chr_read(address);
+  }
+
+  // $3F04, $3F08, $3F0C: mirrors of $3F00 (universal background color) except during forced blanking (TODO)
+  if((address & 0xFFF3) == 0x3F00) address = 0x3F00;
+      
+  return PPU_mem[mirrorAddress(address)] || 0;
+},
+
+// PPU I/O registers
+// -----------------
+
+// TODO: move all this in memory.js
+
+// The CPU can read/write at the following addresses in memory to interact with the PPU
+
+// $2000 (write): set PPU Control Register 1 (PPUCTRL)
+set_PPUCTRL = value => {
+  PPUCTRL_V = (value >> 7) & 1;   // bit 7: trigger a NMI on VBlank
+  //PPUCTRL_P = (value >> 6) & 1  // bit 6: external pin controlling backdrop color (ignored here)
+  PPUCTRL_H = (value >> 5) & 1;   // bit 5: sprite size (0: 8x8, 1: 8x16)
+  PPUCTRL_B = (value >> 4) & 1;   // bit 4: background pattern table (0: $0000, 1: $1000)
+  PPUCTRL_S = (value >> 3) & 1;   // bit 3: sprite pattern table (0: $0000, 1: $1000, ignored in 8x16 mode)
+  PPUCTRL_I = (value >> 2) & 1;   // bit 2: VRAM address increment after reading/writing in PPUDATA (0: 1, 1: 32)
+  T_NN = value & 0b11;            // bits 0-1: update nametable bits in scroll register T
+},
+
+// $2001 (write): set PPU Control Register 2 (PPUMASK)
+set_PPUMASK = value => {
+  //PPUMASK_RGB = (value >> 5) & 7; // Bits 5-7: red/green/blue emphasis on NTSC, red/blue/green on PAL (ignored here)
+  PPUMASK_s = (value >> 4) & 1;     // Bit 4: show sprites
+  PPUMASK_b = (value >> 3) & 1;     // Bit 3: show background
+  //PPUMASK_M = (value >> 2) & 1;   // Bit 2: show sprites on leftmost 8px-wide column (ignored here)
+  //PPUMASK_m = (value >> 1) & 1;   // Bit 1: show background on leftmost 8px-wide column (ignored here)
+  //PPUMASK_G = value & 1;          // Bit 0: greyscale (all colors are ANDed with $30; ignored here)
+},
+
+// $2002 (read): get PPU Status Register (PPUSTATUS)
+get_PPUSTATUS = () => {
+  
+  // Update status
+  t = cpu_mem[0x2002] = 
+    // 0 +                // Bits 0-4: copy of last 5 bits written to a PPU register (can be ignored)
+    (PPUSTATUS_O << 5)    // Bit 5 (O): Sprite overflow (set during sprite evaluation if more than 8 sprites in next scanline, cleared at pre-render line, buggy on the NES)
+    + (PPUSTATUS_S << 6)  // Bit 6 (S): Sprite 0 hit (set when an opaque pixel from sprite 0 overlaps an opaque pixel of the background if both displays are enabled, cleared at pre-render line)
+    + (PPUSTATUS_V << 7); // Bit 7 (V): VBlank (set at line 241, cleared after reading PPUSTATUS and at pre-render line)
+  
+  // Reset PPUSCROLL/PPUADDR latch
+  latch = 0;
+  
+  // Reset VBlank
+  PPUSTATUS_V = 0;
+
+  // Return status (without the resets)
+  return t;
+},
+
+// $2003 (write): set SPR-RAM Address Register (OAMADDR)
+set_OAMADDR = address => {
+  OAMADDR = address;
+},
+
+// $2004h (read/write): SPR-RAM Data Register (OAMDATA, address must be set first). Not readable on Famicom
+get_OAMDATA = () => {
+  return OAM[OAMADDR];
+},
+
+set_OAMDATA = value => {
+  OAM[OAMADDR] = value;
+  OAMADDR++;
+  OAMADDR %= 0x100;
+},
+
+// $2005 (write twice: vertical, then horizontal): PPU Background Scrolling Offset (PPUSCROLL)
+set_PPUSCROLL = value => {
+
+  // Latch equals 1: second write, update vertical scroll
+  // If value is between 240 and 255, it becomes negative (-16 to -1) and the rendering gets glitchy (ignored here)
+  if(latch){
+    
+    // Update Y bits of scroll register T (YYYYYyyy = value)
+    T_YYYYY = value >> 3;
+    T_yyy = value & 0b111;
+  }
+  
+  // Latch equals 0: first write, update horizontal scroll
+  else {
+    
+    // Update X bits of scroll register T (XXXXXxxx = value)
+    T_XXXXX = value >> 3;
+    xxx = value & 0b111;
+  }
+  
+  // Toggle latch
+  latch ^= 1;
+},
+
+// $2006 (write twice): VRAM Address Register (PPUADDR)
+set_PPUADDR = value => {
+  var secondWrite = latch;
+  
+  // Latch equals 1: second write, set low byte of address and update X and Y scrolling
+  if(latch) {
+    
+    PPUADDR += value;
+    
+    // Update X and Y bits of scroll register T (YYYXXXXX)
+    T_YYYYY += (value >> 5); // read the three low bits of YYYYY
+    T_XXXXX = value & 0b11111;
+    
+    // Copy T in V, containing the scroll values to be used in the next scanline
+    V_yyy = T_yyy;
+    V_YYYYY = T_YYYYY;
+    V_XXXXX = T_XXXXX;
+    V_NN = T_NN;
+  }
+  // Latch equals 0: first write, set high byte of address and update Y scrolling
+  else {
+    
+    PPUADDR = value << 8;
+    
+    // Update Y bits of scroll register T (00yyNNYY)
+    T_yyy = (value >> 4) & 0b11;   // only bits 0 and 1 of yyy are set. Bit 2 is corrupted to 0
+    T_NN = (value >> 2) & 0b11;
+    T_YYYYY = (value & 0b11) << 3; // read the two high bits of YYYYY
+  }
+  
+  // Toggle latch
+  latch ^= 1;
+  if(secondWrite) mapper_ppu_address(PPUADDR);
+},
+
+// $2007h (read/write): VRAM Data Register (PPUDATA, an address must be set using PPUADDR before accessing this)
+
+// Write
+set_PPUDATA = value => {
+  PPUADDR &= 0x3FFF;
+  mapper_ppu_address(PPUADDR);
+  
+  // $0000-$1FFF: CHR-ROM/RAM
+  if(PPUADDR < 0x2000){
+    mapper_chr_write(PPUADDR, value);
+  }
+  
+  PPU_mem[mirrorAddress(PPUADDR)] = value;
+  
+  // increment address (1 or 32 depending on bit 2 of PPUCTRL)
+  PPUADDR += PPUCTRL_I ? 32 : 1;
+  mapper_ppu_address(PPUADDR);
+},
+
+// Read
+get_PPUDATA = () => {
+  PPUADDR &= 0x3FFF;
+  mapper_ppu_address(PPUADDR);
+  
+  // PPUADDR between $0000 and $3EFF: buffered read
+  // Each read fills a 1-byte buffer and returns the value previously stored in that buffer
+  if(PPUADDR <= 0x3F00){
+    t = PPUDATA_read_buffer;
+    PPUDATA_read_buffer = ppu_read(PPUADDR);
+  }
+  
+  // PPUADDR higher than $3EFF: direct read
+  else {
+    t = ppu_read(PPUADDR);
+  }
+  
+  // increment address (1 or 32 depending on bit 2 of PPUCTRL)
+  PPUADDR += PPUCTRL_I === 1 ? 32 : 1; 
+  mapper_ppu_address(PPUADDR);
+  
+  return t;
+},
+
+// $4014: (write): copy a 256-byte page of CPU memory into the OAM memory (OAMDMA)
+set_OAMDMA = value => {
+  for(var i = 0; i < 256; i++){
+    OAM[(OAMADDR + i) & 255] = memory_read(value * 0x100 + i);
+  }
+  
+  // Consume 513 CPU cycles
+  // (or 514 cycles when the current CPU cycle is odd. Ignored here)
+  for(i = 0; i < 513; i++){
+    apu_clock(1);
+    cpu_tick();
+  }
+  //NES.haltCycles(513)
+},
+
+// Rendering
+// ---------
+
+// Background:
+// The data stored in VRAM represents a 512*480px background, separated in four 256*240px screens
+// Each screen can contain 32*30 tiles, and each tile measures 8*8px and can use a 4-color palette
+// For each screen, a nametable in VRAM tells which tiles to draw, and an attribute table tells which palettes to use
+// Attributes hold four 2-bit values, each of these values indicates which background subpalette to use for a given tile
+//
+// Attribute table for a given nametable (8*8 attributes):
+//
+//        0  1  2  3  4  5  6  7
+//      +--+--+--+--+--+--+--+--+
+// 2xC0 |  |  |  |  |  |  |  |  |
+//      +--+--+--+--+--+--+--+--+
+// 2xC8 |  |  |  |  |  |  |  |  |
+//      +--+--+--+--+--+--+--+--+
+// 2xD0 |  |  |  |  |  |  |  |  |
+//      +--+--+--+--+--+--+--+--+
+// 2xD8 |  |  |  |  |  |  |  |  |
+//      +--+--+--+--+--+--+--+--+
+// 2xE0 |  |  |  |  |  |  |  |  |
+//      +--+--+--+--+--+--+--+--+
+// 2xE8 |  |  |  |  |  |  |  |  |
+//      +--+--+--+--+--+--+--+--+
+// 2xF0 |  |  |  |  |  |  |  |  |
+//      +--+--+--+--+--+--+--+--+
+// 2xF8 |  |  |  |  |  |  |  |  |
+//      +--+--+--+--+--+--+--+--+
+//
+//  One attribute:    /    \  
+//                  /       \
+//                /          \
+//              /             \
+//            /                \
+//
+//           bits 0-1   bits 2-3
+//          +-------------------+
+//          |  Tile   |  Tile   |
+//          |         |         |
+//          |  X, Y   |  X+1, Y |
+//          |---------+---------|
+//          |  Tile   |   Tile  |
+//          |         |         |
+//          |  X, Y+1 | X+1,Y+1 |
+//          +-------------------+
+//           bits 4-5   bits 6-7
+//
+//
+// Generate one background scanline for game rendering and sprite priority
+// The line number (y) is a value vetween 0 and 480
+drawVramScanline = y => {
+  
+  
+  var i, j, X, Y, nametable, bits, pixel, tileLow, tileHigh, tileColors;
+  tileColors = new Array(4);
+  
+  // Reset pixel buffer
+  vramPixelBuffer = [];
+
+  // Y tile coordinate (0-60)
+  Y = ~~(y/8); 
+
+  // For each tile of the scanline (X tile coordinate between 0 and 64):
+  for(X = 64; X--;){
+    
+    // Get the nametable address in PPU memory:
+    // $2000-$23BF: top left screen
+    // $2400-$27BF: top right screen
+    // $2800-$2BBF: bottom left screen
+    // $2C00-$2FBF: bottom right screen
+    nametable = 0x2000 + (0x800 * (Y > 29)) + (0x400 * (X > 31));
+    
+    // Get the attribute table address in PPU memory:
+    // $23C0-$23FF: top left screen
+    // $27C0-$27FF: top right screen
+    // $2BC0-$2BFF: bottom left screen
+    // $2FC0-$2FFF: bottom right screen
+    // attributetable = nametable + 0x3C0;
+    
+    // Get the attribute byte for the group including the current tile:
+    // attribute_X = (X % 32) >> 2; // 0-7
+    // attribute_Y = (Y % 30) >> 2; // 0-7
+    // attribute = ppu_read(attributetable + attribute_Y * 8 + attribute_X);
+    
+    // Get the attribute's 2-bit value for the current title:
+    // bits_X = ((X % 32) >> 1) & 1; // 0-1
+    // bits_Y = ((Y % 30) >> 1) & 1; // 0-1
+    // bits = ((attribute >> (4 * bits_Y + 2 * bits_X)) & 0b11); // 0-3
+    
+    // Golfed here:
+    bits = (
+      ppu_read(nametable + 0x3C0 + ((Y % 30) >> 2) * 8 + ((X % 32) >> 2))
+      >> 
+      (
+        4 * (((Y % 30) >> 1) & 1)
+        + 
+        2 * (((X % 32) >> 1) & 1)
+      )
+    ) & 0b11;
+
+    // Get the subpalette represented by these bits:
+    // Background palette is stored at $3F00-$3F0F (16 colors, 4 subpalette of 4 colors)
+    // The values stored in the palettes are indexes of the 64 system colors (systemPalette)
+    // The first color of each subpalette is ignored (*), the value at $3F00 (universal background color) is used instead
+    // (*) during forced blanking (background & sprites disabled), if PPUADDR points to a subpalette's color 0, this color is used as universal background color (TODO)
+    /*colors = [
+      systemPalette[ppu_read(0x3F00 + bits * 4)],  // universal background color
+      systemPalette[ppu_read(0x3F00 + bits * 4 + 1)],  // color 1 of current subpalette
+      systemPalette[ppu_read(0x3F00 + bits * 4 + 2)],  // color 2 of current subpalette
+      systemPalette[ppu_read(0x3F00 + bits * 4 + 3)],  // color 3 of current subpalette
+    ];*/
+    
+    // Get the tile's address:
+    // The bit B of PPUCTRL tells if the tile's graphics are stored in the first or second CHR-ROM bank ($0000-$0FFF or $1000-$1FFF)
+    // The tile's index within the current CHR-ROM bank is stored in the nametable
+    // tile = PPUCTRL_B * 0x1000 + ppu_read(nametable + (Y % 30) * 32 + (X % 32))
+    
+    // Get the pixels values:
+    // The pixels of each tile are encoded on 2 bits
+    // The value of a pixel (0-3) corresponds to a color from the current subpalette
+    // Each tile is stored on 16 bytes, the first 8 bytes represent the "high bit" of each pixel, and the last 8 bytes the "low bit"
+    
+    // Let x and y be the coordinates of the pixels to draw inside the current tile (x = 0-7, y = 0-7)
+    y %= 8;
+    // These reads are constant for all eight pixels of the tile row. Keeping
+    // them outside the pixel loop leaves more main-thread time for APU output.
+    t = PPUCTRL_B * 0x1000 + ppu_read(nametable + (Y % 30) * 32 + (X % 32)) * 16 + y;
+    tileLow = ppu_read(t) || 0;
+    tileHigh = ppu_read(t + 8) || 0;
+    for(i = 0; i < 4; i++) tileColors[i] = systemPalette[ppu_read(0x3F00 + bits * 4 + i)];
+    for(x = 8; x--;){
+      
+      // The current line of 8 pixels is encoded on 2 bytes:
+      // byte1 = ppu_read(tile * 16 + y);
+      // byte2 = ppu_read(tile * 16 + y + 8);
+      
+      // And the current pixel's value is encoded as:
+      // pixel = ((byte2 >> (7 - x)) & 1) * 2 + ((byte1 >> (7 - x)) & 1);
+      
+      // If the pixel's value is 0, the pixel is considered transparent and the universal background color is rendered
+      // But if it's opaque (non-zero), its color is stored in the current line's pixel buffer
+      // This buffer will be useful to render the sprites either in the front or behind the background tiles
+      
+      // Golfed here:
+      if(pixel = ((tileHigh >> (7 - x)) & 1) * 2 + ((tileLow >> (7 - x)) & 1)){
+        vramPixelBuffer[X * 8 + x] = tileColors[pixel];
+      }
+      
+    }
+  }
+},
+
+// Screen:
+// Backround rendering and sprite rendering can be enabled or disabled using bits b and s of PPUMASK
+// Background pixels are stored in a buffer using drawVramScanline()
+// Up to 64 sprites can be drawn on screen, either on the foreground or behind the background tiles
+// Sprites are drawn from front to back (sprite 0 to sprite 63) and can overlap
+// A background sprite can overlap a foreground sprite, in that case it behaves like a clipping mask (ex: SMB's mushroom coming out of a question block)
+// Sprites can measure 8*8px or 8*16px (if bit H of PPUCTRL is set)
+// If 8*16px sprites are enabled, two consecutive tiles from the CHR-ROM are drawn on screen (the first one on top, the second one on bottom) with the same palette
+// Contrary to background tiles:
+// - sprites tiles use a dedicated sprite color palette ($3F10-$3F1F), divided in 4 subpalettes
+// - the first color of each subpalette is always "transparent"
+// - sprites can be flipped horizontally and/or vertically
+// As soon as an opaque pixel of the sprite 0 overlaps an opaque pixel of the background, a "sprite 0 hit" is detected (bit S of PPUSTATUS is set)
+
+// Each sprite is encoded on 4 bytes in the OAM memory:
+// Byte 0: Y coordinate
+// Byte 1: 
+//  * 8x8 mode: tile index in current tile bank
+//  * 8x16 mode: bit 0 = tile bank / bits 1-7 = top tile index
+// Byte 2:
+//  * bits 0-1: palette (4-7)
+//  * bits 2-4: always 0
+//  * bit 5: priority (0: in front of the background, 1: behind the background)
+//  * bit 6: X flip
+//  * bit 7: Y flip
+// Byte 3: X coordinate
+
+// Render one final scanline on screen (background + sprites):
+// The scanline number (y) is a value vetween 0 and 240
+drawScanline = y => {
+  
+  var i, x, scanlineSprites, spriteScanlineAddress, bits, pixel;
+
+  // Find which sprites are present in the current scanline:
+  // Reset the list
+  scanlineSprites = [];
+  
+  // Loop on all the sprites
+  for(i = 0; i < 64; i++){
+    
+    // If the current scanline is between the top of the sprite and its bottom (8px or 16px lower, depending on bit H of PPUCTRL)
+    if(y >= OAM[i * 4] && y < OAM[i * 4] + (PPUCTRL_H ? 16 : 8)){
+      
+      // If more than 8 sprites are found, set overflow flag (bit 0 of PPUSTATUS) and stop checking
+      if(scanlineSprites.length == 8) {
+        PPUSTATUS_O = 1;
+        break;
+      }
+      
+      // Else, the sprite is visible in the current scanline. Add it to the list
+      scanlineSprites.push(i);
+    }
+  }
+  
+  // Draw the scanline's pixels:
+  for(x = 0; x < 256; x++){
+    
+    // Draw background tiles if background rendering is enabled
+    // Use universal background color if no background tile is present
+    // X and Y scrolling are applied when fetching the pixels values inside vramBuffer32
+    if(PPUMASK_b){
+      NES.frameBuffer32[y * 256 + x] = vramPixelBuffer[(x + scroll_x) % 512] || systemPalette[ppu_read(mirrorAddress(0x3F00))];
+    }
+    
+    // Then, for each sprite from back to front:
+    for(i = scanlineSprites.length - 1; i >= 0; i--){
+      
+      // If this sprite is present at this pixel (if x is between the left column and right column of the sprite)
+      if(x >= OAM[scanlineSprites[i] * 4 + 3] && x < OAM[scanlineSprites[i] * 4 + 3] + 8){
+        
+        // Retrieve the sprite's subpalette (bits 0-1 of byte 2 of sprite i in OAM memory)
+        bits = OAM[scanlineSprites[i] * 4 + 2] & 0b11;
+        /*colors = [
+          ,                                               // transparent
+          systemPalette[PPU_mem[0x3F10 + bits * 4 + 1]],  // color 1 of current subpalette
+          systemPalette[PPU_mem[0x3F10 + bits * 4 + 2]],  // color 2 of current subpalette
+          systemPalette[PPU_mem[0x3F10 + bits * 4 + 3]],  // color 3 of current subpalette
+        ];*/
+        
+        // Retrieve the address of the current sprite's scanline in CHR-ROM:
+        t = scanlineSprites[i] * 4;
+        o = OAM[t];
+        spriteScanlineAddress =
+        
+          // CHR-ROM bank
+          (
+            PPUCTRL_H
+            
+            // 8*16
+            ? (OAM[t + 1] & 1)
+            
+            // 8*8
+            : PPUCTRL_S
+          ) * 0x1000
+          
+          // Tile
+          + (OAM[t + 1] & (0xFF - PPUCTRL_H)) * 16
+          
+          // Scanline
+          + (OAM[t + 2] & 0b10000000
+            
+            // Y flip
+            ? (7 - y + o + 8 * ((y < o + 8 && PPUCTRL_H) + PPUCTRL_H))
+
+            // No Y flip
+            : (8 + y - o - 8 * (y < o + 8))
+          );
+
+        // Get pixel position within the sprite scanline
+        t = x - OAM[scanlineSprites[i] * 4 + 3];
+        
+        // Handle horizontal flip
+        o = (OAM[scanlineSprites[i] * 4 + 2] & 0b1000000) ? t : 7 - t;
+        
+        // Get current pixel value, and check if it's opaque (value: 1, 2 or 3)
+        if(pixel = ((ppu_read(spriteScanlineAddress + 8) >> o) & 1) * 2 + ((ppu_read(spriteScanlineAddress) >> o) & 1)){
+          
+          // If sprite rendering is enabled, draw it on the current frame
+          // But if priority bit is 1 and background rendering is enabled: let the background tile's pixel displayed on top if it's opaque
+          // TODO: fix excitebike black sprite 0 that shows up behind background 
+          if(((!((OAM[scanlineSprites[i] * 4 + 2] & 0b100000) && vramPixelBuffer[(x + scroll_x) % 512])) || !PPUMASK_b) && PPUMASK_s){
+            NES.frameBuffer32[y * 256 + x] = systemPalette[PPU_mem[0x3F10 + bits * 4 + pixel]];
+          }
+          
+          // Sprite 0 hit detection
+          if(scanlineSprites[i] === 0 && !PPUSTATUS_S && vramPixelBuffer[(x + scroll_x) % 512] && PPUMASK_s && PPUMASK_b){
+            PPUSTATUS_S = 1;
+          }
+        }
+      }
+    }
+  }
+},
+
+// Clock
+// -----
+
+// Clock one PPU cycle
+ppu_tick = () => {
+  
+  dot++;
+  // One rendering clock on visible/pre-render lines, when rendering is enabled.
+  if(dot === 260 && (scanline < 240 || scanline === 261)) mapper_scanline();
+  
+  // The PPU renders one dot (one pixel) per cycle
+  // At the end of each scanline (341 dots), a new scanline starts
+  // The screen is complete when 240 scanlines are rendered
+  if(dot > 340){
+
+    dot = 0;
+    scanline++;
+    
+    // Update scroll
+    V_XXXXX = T_XXXXX;
+    V_NN = (V_NN & 0b10) + (T_NN & 0b01);
+    
+    // Visible scanlines (0-239)
+    if(scanline < 240){
+      drawVramScanline((scanline + scroll_y) % 480);
+      drawScanline(scanline);
+      
+      // Update scroll
+      scroll_x = (V_NN & 0b1) * 256 + V_XXXXX * 8 + xxx;
+      
+
+    }
+    
+    // VBlank starts at scanline 241 (a NMI interrupt is triggered, and the frame is displayed on the canvas)
+    else if(scanline == 240){
+      
+      // VBlank flag
+      PPUSTATUS_V = 1;
+      
+      // Send NMI interrupt to the CPU
+      interrupt_requested = 1;
+      
+      // Output frameBuffer on canvas
+      NES.frameData.data.set(NES.frameBuffer8);
+      NES.frameCtx.putImageData(NES.frameData, 0, 0);
+    
+
+    }
+    
+    // VBlank ends at the pre-render scanline, and PPUSTATUS is reset
+    else if(scanline == 260){
+      PPUSTATUS_O =
+      PPUSTATUS_S =
+      PPUSTATUS_V = 0;
+    }
+    
+    // When the pre-render scanline is completed, a new frame starts
+    else if(scanline == 261){
+      scanline = -1;
+      endFrame = 1;
+      
+      // Update scroll
+      V_YYYYY = T_YYYYY;
+      V_yyy = T_yyy;
+      V_NN = (V_NN & 0b01) + (T_NN & 0b10);
+      scroll_y = (V_NN >> 1) * 240 + V_YYYYY * 8 + V_yyy;
+    }
+  }
+}
+
+;
+var frameCanvas=document.getElementById('frameCanvas'),ui_ready=false,ui_sequence=0;
+var statusLine=document.getElementById('loadStatus');
+document.getElementById('fileInput').onchange=async event=>{
+ var file=event.target.files[0];if(!file)return;
+ var sequence=++ui_sequence;NES.pause();ui_ready=false;
+ try{
+  await audio_prepare().catch(error=>audio_status(error.message));
+  var bytes=new Uint8Array(await file.arrayBuffer());if(sequence!==ui_sequence)return;
+  NES.init({rom:bytes,frame:frameCanvas});ui_ready=true;statusLine.textContent=file.name;NES.play();
+ }catch(error){if(sequence===ui_sequence)statusLine.textContent=error.message;}
+};
+document.getElementById('b_play').onclick=()=>{if(ui_ready)NES.play();};
+document.getElementById('b_pause').onclick=NES.pause;
+document.getElementById('b_reset').onclick=()=>{if(ui_ready){NES.reset();NES.play();}};
+document.getElementById('b_audio').onclick=audio_resume;
+document.getElementById('i_audio').onchange=event=>{audio_enabled=event.target.checked;audio_set_volume();};
+var keys={ArrowLeft:6,ArrowUp:4,ArrowRight:7,ArrowDown:5,KeyX:0,KeyC:1,Escape:2,Enter:3};
+for(var type of ['keydown','keyup'])window.addEventListener(type,event=>{
+ if(!ui_ready||event.ctrlKey||event.metaKey||event.altKey||event.isComposing||keys[event.code]===undefined)return;
+ event.preventDefault();(event.type==='keydown'?NES.keydown:NES.keyup)(1,keys[event.code]);
+});
+window.addEventListener('blur',()=>{if(ui_ready)for(var key=0;key<8;key++)NES.keyup(1,key);});

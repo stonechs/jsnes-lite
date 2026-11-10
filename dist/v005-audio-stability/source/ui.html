@@ -1,0 +1,11 @@
+<!doctype html><meta charset=utf-8><title>JSNES lite standalone</title>
+<h3>JSNES lite</h3><p>Mappers 0, 1, 2, 3, 4, 30 (30 incomplete). Load a local .nes file.</p>
+<canvas id=frameCanvas width=256 height=240></canvas>
+<p><input type=file id=fileInput accept=.nes> <label><input type=checkbox id=i_start checked>Auto start</label></p>
+<p><button id=b_play>Play</button> <button id=b_pause>Pause</button> <button id=b_frame>Next frame</button> <button id=b_reset>Reset</button></p>
+<p id=loadStatus role=status>Select a local ROM.</p>
+<p><button id=b_audio>Enable audio</button> <label><input type=checkbox id=i_audio checked>Sound</label> <label>Volume <input id=i_volume type=range min=0 max=1 step=.01 value=.7></label> <span id=audioStatus>Audio starts after interaction.</span></p>
+<details id=audioDebug><summary>Audio diagnostics</summary><output id=audioMetrics>Play a ROM to measure the buffer.</output></details>
+<p>Arrow keys: move; X: A; C: B; Enter: Start; Esc: Select.</p>
+<details id=p_debug><summary>VRAM</summary><canvas id=vramCanvas width=512 height=480></canvas></details>
+<style>body{font:14px Arial;background:#888}canvas{background:#000;image-rendering:pixelated}</style>

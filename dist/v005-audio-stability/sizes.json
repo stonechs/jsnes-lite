@@ -1,0 +1,71 @@
+{
+  "version": "v005",
+  "jsnesLiteCommit": "923d45e04483b7655dbdd91773f74de46c38c661",
+  "jsnesReferenceCommit": "b8a45d088e922b6abcd87c4eb1b7237919e9d3d2",
+  "closure": "20261108.0.0",
+  "roadroller": "2.1.0",
+  "roadrollerLevel": 2,
+  "romIncluded": false,
+  "files": {
+    "audio-worklet.min.js": {
+      "bytes": 2427,
+      "KiB": 2.3701171875,
+      "gzipBytes": 952,
+      "sha256": "4627ee85d9cfeed9fea99d461948e654aeb020c0d2052243a4542fb0dbf0ee35"
+    },
+    "audio-worklet.readable.js": {
+      "bytes": 3506,
+      "KiB": 3.423828125,
+      "gzipBytes": 1170,
+      "sha256": "dce29460a62978db2bdb6fde2ac878a43300c452399cbc98ecb1c184495106b6"
+    },
+    "closure.externs.js": {
+      "bytes": 71,
+      "KiB": 0.0693359375,
+      "gzipBytes": 90,
+      "sha256": "02c1dbcf9af71b24df18fec614fe90fd52ee28cab0c2c0827bc7dd30b8772419"
+    },
+    "closure.input.js": {
+      "bytes": 147643,
+      "KiB": 144.1826171875,
+      "gzipBytes": 36665,
+      "sha256": "e8eb59f00a56b01159168026cfcff6e5f0113b936dacfc9e5a1c35933e44011a"
+    },
+    "closure.min.html": {
+      "bytes": 29177,
+      "KiB": 28.4931640625,
+      "gzipBytes": 11950,
+      "sha256": "a04607d884bc0c596737d558e909b317659a0a18e7fe6861d16715f0c60dab29"
+    },
+    "closure.min.js": {
+      "bytes": 27953,
+      "KiB": 27.2978515625,
+      "gzipBytes": 11355,
+      "sha256": "05103b268efe0137aa489bff96e87e710e86575e0a1a626ffc2a34ada267291a"
+    },
+    "jsnes-lite.min.html": {
+      "bytes": 13636,
+      "KiB": 13.31640625,
+      "gzipBytes": 10451,
+      "sha256": "099fa4f87b629d98d33cb0e5fc5a694a9d642faa6ce2dc81a604df99dd692e65"
+    },
+    "jsnes-lite.min.js": {
+      "bytes": 13578,
+      "KiB": 13.259765625,
+      "gzipBytes": 10399,
+      "sha256": "15c0961c39c00a91dac45a0ad07f368c4fda21f86448aa7b5c5c79eeda8f8ec3"
+    },
+    "jsnes-lite.readable.html": {
+      "bytes": 149949,
+      "KiB": 146.4345703125,
+      "gzipBytes": 37388,
+      "sha256": "9b73e889a2a39d6ba9a027a7b698c636a01b17131413e322c295fc3214964470"
+    },
+    "jsnes-lite.readable.js": {
+      "bytes": 149961,
+      "KiB": 146.4462890625,
+      "gzipBytes": 37385,
+      "sha256": "c9d1932587d6cbb24307813d22d65e2a204d96c78ceb08b888864a3a0cc665c5"
+    }
+  }
+}

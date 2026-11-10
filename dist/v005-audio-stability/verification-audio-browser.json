@@ -1,0 +1,104 @@
+[
+  {
+    "file": "jsnes-lite.readable.html",
+    "errors": [],
+    "http": [],
+    "initialWorkletStats": [
+      3,
+      0.2941100961161356,
+      18816,
+      897,
+      0,
+      7440,
+      0.509234607219696,
+      0,
+      0,
+      48000,
+      5,
+      3072,
+      4096
+    ],
+    "measuredFPS": 60.28432607489714,
+    "threaded": {
+      "before": 72576,
+      "after": 76416,
+      "advanced": 3840
+    },
+    "mutedPeak": 0,
+    "pausedPeak": 0,
+    "contexts": 1,
+    "nodes": 1,
+    "rate": 48000,
+    "state": "running",
+    "secure": true,
+    "processorErrors": []
+  },
+  {
+    "file": "closure.min.html",
+    "errors": [],
+    "http": [],
+    "initialWorkletStats": [
+      3,
+      0.043812646106272335,
+      23040,
+      0,
+      0,
+      4113,
+      0.509234607219696,
+      0,
+      16,
+      48000,
+      5,
+      3072,
+      4096
+    ],
+    "measuredFPS": 60.58446186710521,
+    "threaded": {
+      "before": 77312,
+      "after": 81152,
+      "advanced": 3840
+    },
+    "mutedPeak": 0,
+    "pausedPeak": 0,
+    "contexts": 1,
+    "nodes": 1,
+    "rate": 48000,
+    "state": "running",
+    "secure": true,
+    "processorErrors": []
+  },
+  {
+    "file": "jsnes-lite.min.html",
+    "errors": [],
+    "http": [],
+    "initialWorkletStats": [
+      3,
+      0.30086620785002116,
+      21120,
+      0,
+      0,
+      4435,
+      0.509234607219696,
+      0,
+      15,
+      48000,
+      5,
+      3072,
+      4096
+    ],
+    "measuredFPS": 59.13448615747018,
+    "threaded": {
+      "before": 75392,
+      "after": 79616,
+      "advanced": 4224
+    },
+    "mutedPeak": 0,
+    "pausedPeak": 0,
+    "contexts": 1,
+    "nodes": 1,
+    "rate": 48000,
+    "state": "running",
+    "secure": true,
+    "processorErrors": []
+  }
+]

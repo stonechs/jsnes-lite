@@ -1,0 +1,170 @@
+{
+  "upstreamCommit": "923d45e04483b7655dbdd91773f74de46c38c661",
+  "closure": "20261108.0.0",
+  "roadroller": "2.1.0",
+  "roadrollerLevel": 2,
+  "romIncluded": false,
+  "winner": "advanced-dynamic-native.page.roadroller.html",
+  "files": {
+    "advanced-dynamic-native.externs.js": {
+      "bytes": 71,
+      "gzipBytes": 90,
+      "sha256": "02c1dbcf9af71b24df18fec614fe90fd52ee28cab0c2c0827bc7dd30b8772419"
+    },
+    "advanced-dynamic-native.min.html": {
+      "bytes": 11154,
+      "gzipBytes": 5234,
+      "sha256": "ee418a29e512cd82cba062ba038f551363b1a7700708244ef5d8ecf0bccca624"
+    },
+    "advanced-dynamic-native.min.js": {
+      "bytes": 10391,
+      "gzipBytes": 4806,
+      "sha256": "ab96f316e36f6a60410a0fb78831b5f9ffed4ad7234c059a8e536a329c8cfb6d"
+    },
+    "advanced-dynamic-native.page.roadroller.html": {
+      "bytes": 6420,
+      "gzipBytes": 4975,
+      "sha256": "052af2c065f2a8304236f54830df673321c2e7dd06b49b50b1e4a97f7e4d6104"
+    },
+    "advanced-dynamic-native.page.roadroller.js": {
+      "bytes": 6362,
+      "gzipBytes": 4921,
+      "sha256": "813b3c0d8a6123cece5ab20f97970a015af9cc86cd5e730e77336f9157ca8a4c"
+    },
+    "advanced-dynamic-native.readable.html": {
+      "bytes": 97038,
+      "gzipBytes": 24261,
+      "sha256": "9b80826245499c2a0c64fcf41a6ca100f26ca3c1bd9a3a4ff3eecf7aeb6d3918"
+    },
+    "advanced-dynamic-native.readable.js": {
+      "bytes": 96275,
+      "gzipBytes": 23845,
+      "sha256": "673fcd3f2c6913f688680453f63ec87e00abcb9d69c372c737952adb050389e4"
+    },
+    "advanced-dynamic-native.roadroller.html": {
+      "bytes": 6621,
+      "gzipBytes": 5051,
+      "sha256": "0d54e07108cb4c464cde7f5b825e4e8a5d2e628c552316f954da69998a4c3d7c"
+    },
+    "advanced-dynamic-native.roadroller.js": {
+      "bytes": 5858,
+      "gzipBytes": 4544,
+      "sha256": "dde5c744a633261eadca7629fce1b77f7df9d81267768fd1c8033b62726d049e"
+    },
+    "advanced-dynamic.externs.js": {
+      "bytes": 71,
+      "gzipBytes": 90,
+      "sha256": "02c1dbcf9af71b24df18fec614fe90fd52ee28cab0c2c0827bc7dd30b8772419"
+    },
+    "advanced-dynamic.min.html": {
+      "bytes": 13733,
+      "gzipBytes": 6286,
+      "sha256": "414cc1936c63eaa6f6775257311ffe547a07582cc070c28aab61a2246f97be70"
+    },
+    "advanced-dynamic.min.js": {
+      "bytes": 12970,
+      "gzipBytes": 5864,
+      "sha256": "5a856bd6ab9bbffb29a6fd4fc5e957fdf1db828a42b8f2af6ca33d7c040d920a"
+    },
+    "advanced-dynamic.readable.html": {
+      "bytes": 97038,
+      "gzipBytes": 24261,
+      "sha256": "9b80826245499c2a0c64fcf41a6ca100f26ca3c1bd9a3a4ff3eecf7aeb6d3918"
+    },
+    "advanced-dynamic.readable.js": {
+      "bytes": 96275,
+      "gzipBytes": 23845,
+      "sha256": "673fcd3f2c6913f688680453f63ec87e00abcb9d69c372c737952adb050389e4"
+    },
+    "advanced-dynamic.roadroller.html": {
+      "bytes": 7825,
+      "gzipBytes": 5973,
+      "sha256": "cc1622fac92fcf19ca2ee907b12798a3c9ed0b67ca02d6999c6a7e387c3ff4f3"
+    },
+    "advanced-dynamic.roadroller.js": {
+      "bytes": 7062,
+      "gzipBytes": 5462,
+      "sha256": "3b80d1a22d2ae821586868da4bb7a05d7bdcfad1235ada27b17ccf4136191754"
+    },
+    "advanced.min.html": {
+      "bytes": 25350,
+      "gzipBytes": 7054,
+      "sha256": "b4970c50cb92339979a03774f0633fe6509e62ff5eb72ed2733cfaa8687afbc2"
+    },
+    "advanced.min.js": {
+      "bytes": 24587,
+      "gzipBytes": 6621,
+      "sha256": "54868b70bfff388c6be25b0f0ec8c768cb1be25f00c44a6d46bf1448ed965b14"
+    },
+    "advanced.readable.html": {
+      "bytes": 89000,
+      "gzipBytes": 20984,
+      "sha256": "4d81b6db358957250f7e66105f31f6c255d554ba455889c64dc0832d6498eb6c"
+    },
+    "advanced.readable.js": {
+      "bytes": 88237,
+      "gzipBytes": 20596,
+      "sha256": "d216dfa7f95c88c8b5336890588062fd51627b445ca568da226e9fd66abc92f0"
+    },
+    "advanced.roadroller.html": {
+      "bytes": 8202,
+      "gzipBytes": 6257,
+      "sha256": "581964c36dc18272bc5872fcc17071eecbddb25066e14607c33ea2df1a90229c"
+    },
+    "advanced.roadroller.js": {
+      "bytes": 7439,
+      "gzipBytes": 5746,
+      "sha256": "f8660c164b3d042b1ed4a826c9ff6f596670df953f1794cb5e09c005f1d599ca"
+    },
+    "jsnes-lite.min.html": {
+      "bytes": 6420,
+      "gzipBytes": 4975,
+      "sha256": "052af2c065f2a8304236f54830df673321c2e7dd06b49b50b1e4a97f7e4d6104"
+    },
+    "jsnes-lite.min.js": {
+      "bytes": 6362,
+      "gzipBytes": 4921,
+      "sha256": "813b3c0d8a6123cece5ab20f97970a015af9cc86cd5e730e77336f9157ca8a4c"
+    },
+    "jsnes-lite.readable.html": {
+      "bytes": 97038,
+      "gzipBytes": 24261,
+      "sha256": "9b80826245499c2a0c64fcf41a6ca100f26ca3c1bd9a3a4ff3eecf7aeb6d3918"
+    },
+    "jsnes-lite.readable.js": {
+      "bytes": 97096,
+      "gzipBytes": 24277,
+      "sha256": "c944e4e2af9071ba08f1ea852dcf1c285baba49e4491a17c8ef4122e2309bf7e"
+    },
+    "simple.min.html": {
+      "bytes": 22721,
+      "gzipBytes": 8013,
+      "sha256": "fbcb02766789f2c32c529858c2106ed1f2918d531e6731f7c89320a6aa4a9a5f"
+    },
+    "simple.min.js": {
+      "bytes": 21958,
+      "gzipBytes": 7596,
+      "sha256": "ea33348eed1f36f5f808ac1c165952d905b83e2781a752f518a12183550099f7"
+    },
+    "simple.readable.html": {
+      "bytes": 96534,
+      "gzipBytes": 24050,
+      "sha256": "8319e7e8cddde34ef98d0f65b9a65959e7f3373a4e7dea270fb85c4da2b95101"
+    },
+    "simple.readable.js": {
+      "bytes": 95771,
+      "gzipBytes": 23636,
+      "sha256": "f0817124298d627792ce4fdbae92d2a50f0dc125b72c33031728931f698bb3d0"
+    },
+    "simple.roadroller.html": {
+      "bytes": 9812,
+      "gzipBytes": 7491,
+      "sha256": "53992e5bd5b2802634b62a0ffa35f1a8e76637fe8d0d2d93e152adbfde111666"
+    },
+    "simple.roadroller.js": {
+      "bytes": 9049,
+      "gzipBytes": 6973,
+      "sha256": "b4f890b91eadba659d1d3716dda3ff5ffbc7c86ee3db09ec4271146c5f112b04"
+    }
+  }
+}

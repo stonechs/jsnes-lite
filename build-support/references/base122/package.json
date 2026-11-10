@@ -1,0 +1,19 @@
+{
+  "name": "base122",
+  "version": "0.0.1",
+  "description": "Re-encodes base-64 into a more compact base-122 encoding",
+  "keywords": [
+    "compression",
+    "base64"
+  ],
+  "scripts": {
+    "test": "node test/testAll.js",
+    "benchmark": "node test/benchmark.js",
+    "minify": "uglifyjs decode.js -c -m --screw-ie8 --lint -o decode.min.js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "benchmark": "^2.1.2",
+    "uglify-js-harmony": "^2.6.2"
+  }
+}

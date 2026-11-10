@@ -1,0 +1,30 @@
+[
+  {
+    "file": "jsnes-lite.readable.html",
+    "open": false,
+    "errors": [],
+    "frame": 2350986370,
+    "vramNonzero": false
+  },
+  {
+    "file": "jsnes-lite.readable.html",
+    "open": true,
+    "errors": [],
+    "frame": 2350986370,
+    "vramNonzero": true
+  },
+  {
+    "file": "jsnes-lite.min.html",
+    "open": false,
+    "errors": [],
+    "frame": 2350986370,
+    "vramNonzero": false
+  },
+  {
+    "file": "jsnes-lite.min.html",
+    "open": true,
+    "errors": [],
+    "frame": 2350986370,
+    "vramNonzero": true
+  }
+]

@@ -1,0 +1,59 @@
+{
+  "version": "v003",
+  "jsnesLiteCommit": "923d45e04483b7655dbdd91773f74de46c38c661",
+  "jsnesReferenceCommit": "b8a45d088e922b6abcd87c4eb1b7237919e9d3d2",
+  "closure": "20261108.0.0",
+  "roadroller": "2.1.0",
+  "roadrollerLevel": 2,
+  "romIncluded": false,
+  "files": {
+    "closure.externs.js": {
+      "bytes": 71,
+      "KiB": 0.0693359375,
+      "gzipBytes": 90,
+      "sha256": "02c1dbcf9af71b24df18fec614fe90fd52ee28cab0c2c0827bc7dd30b8772419"
+    },
+    "closure.input.js": {
+      "bytes": 92369,
+      "KiB": 90.2041015625,
+      "gzipBytes": 23487,
+      "sha256": "260a1543d0075c1399ff34efc5e417abdd91b8955c10bf5deecf5eba001d61e3"
+    },
+    "closure.min.html": {
+      "bytes": 13540,
+      "KiB": 13.22265625,
+      "gzipBytes": 6378,
+      "sha256": "2540f06c1d7e27522b7b24fdd1f6dbe48d1556984bf779e5bbd0ad5f354c9bbd"
+    },
+    "closure.min.js": {
+      "bytes": 12706,
+      "KiB": 12.408203125,
+      "gzipBytes": 5918,
+      "sha256": "20caa41a60ed36f7445a009911fea470330fb2f3b4e7e7863a3067c861b36a00"
+    },
+    "jsnes-lite.min.html": {
+      "bytes": 7641,
+      "KiB": 7.4619140625,
+      "gzipBytes": 5914,
+      "sha256": "262a1ea5a77e7f66daeb53c89a17a72d3d5e4fa74a53a79d8ef0e415c4e516f4"
+    },
+    "jsnes-lite.min.js": {
+      "bytes": 7583,
+      "KiB": 7.4052734375,
+      "gzipBytes": 5861,
+      "sha256": "bcbb89426c418282a0d4820a34cc31649d4044b53744b318bf185013bb49750a"
+    },
+    "jsnes-lite.readable.html": {
+      "bytes": 93203,
+      "KiB": 91.0185546875,
+      "gzipBytes": 23943,
+      "sha256": "58a51e723375df40c26ac909b36ed6219774a4ad5deb82f711ea32ce09747910"
+    },
+    "jsnes-lite.readable.js": {
+      "bytes": 93211,
+      "KiB": 91.0263671875,
+      "gzipBytes": 23942,
+      "sha256": "373dba618aa1172e43d0884dc02de44f41497f224416f00da2bd645a3ac3bfb8"
+    }
+  }
+}

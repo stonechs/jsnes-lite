@@ -1,0 +1,22 @@
+✔ MMC1: serial latch, all PRG/CHR modes, mirroring and partial reset (30.8315ms)
+✔ MMC1: final write address determines register, adjacent writes ignored (13.5397ms)
+✔ MMC1: PRG-RAM enable, CHR-RAM banking and SUROM outer bank (8.6484ms)
+✔ UxROM: bank bits, wraparound, fixed bank, CHR-RAM and register aliases (9.8655ms)
+✔ CNROM: all 8 KiB CHR banks, fixed PRG and CHR-ROM write protection (7.4255ms)
+✔ MMC3: all bank registers, inverted CHR/PRG modes and odd pair alignment (10.0171ms)
+✔ MMC3: four-screen lock, mirror aliases, SRAM enable/write protect (8.2907ms)
+✔ MMC3: reload/decrement, pending line, ack, disabled counting and zero latch (8.7682ms)
+✔ MMC3: CPU PPUADDR clocks, filter, scanline rendering guard and reset (7.1527ms)
+✔ IRQ integration: masked line retained, then serviced; NMI has priority (9.5726ms)
+✔ Loader validation, trainer skip, SRAM isolation and mapper reset isolation (9.9243ms)
+✔ Differential bank switching against pinned latest JSNES (1,2,3,4) (160.6934ms)
+✔ Removing audio diagnostics preserves samples, fades, buffering and refill messages (59.6094ms)
+✔ Executable sources and both interfaces contain no debug UI or telemetry protocol (2.2998ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 618.432

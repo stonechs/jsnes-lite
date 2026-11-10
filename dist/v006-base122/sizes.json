@@ -1,0 +1,92 @@
+{
+  "version": "v006",
+  "sourceVersion": "v005",
+  "base122Commit": "b62945c2733fa4da8792a1071e40a8b326e8dd1b",
+  "closure": "20261108.0.0",
+  "roadroller": "2.1.0 (v005 payload unchanged)",
+  "node": "v24.22.1",
+  "zlib": "1.3.2.1-motley-285e94b",
+  "romIncluded": false,
+  "previousHTMLBytes": 13636,
+  "winner": "roadroller-binary-base122.html",
+  "files": {
+    "closure-deflate-base122.html": {
+      "bytes": 14196,
+      "KiB": 13.86328125,
+      "gzipBytes": 12921,
+      "sha256": "170db7872a62c62d7219072b4a49bd3116d0f3f97b15f8968fb6aa5aac99ab50",
+      "inputBytes": 29177,
+      "binaryBytes": 11932,
+      "encodedUTF8Bytes": 13637,
+      "nativeDecompression": "deflate-raw",
+      "encoding": "Base122"
+    },
+    "roadroller-deflate-base122.html": {
+      "bytes": 12483,
+      "KiB": 12.1904296875,
+      "gzipBytes": 11364,
+      "sha256": "cb83ea6545252293ffcb188669dd90babb0f7e6d92fa5e18a3cffcb8a0a57178",
+      "inputBytes": 13636,
+      "binaryBytes": 10433,
+      "encodedUTF8Bytes": 11924,
+      "nativeDecompression": "deflate-raw",
+      "encoding": "Base122"
+    },
+    "roadroller-gzip-base122.html": {
+      "bytes": 12496,
+      "KiB": 12.203125,
+      "gzipBytes": 11382,
+      "sha256": "19416f648e6b32dded4d73be5b111dc45e7b2cbf61d1aaf25b8e963770349f13",
+      "inputBytes": 13636,
+      "binaryBytes": 10451,
+      "encodedUTF8Bytes": 11944,
+      "nativeDecompression": "gzip",
+      "encoding": "Base122"
+    },
+    "roadroller-deflate-base64.html": {
+      "bytes": 14293,
+      "KiB": 13.9580078125,
+      "gzipBytes": 10845,
+      "sha256": "e1d260b1a262d568a7a759c79393986f4a41dc0f0215cbdc57b2a7eac27021fb",
+      "inputBytes": 13636,
+      "binaryBytes": 10433,
+      "encodedUTF8Bytes": 13912,
+      "nativeDecompression": "deflate-raw",
+      "encoding": "Base64"
+    },
+    "roadroller-binary-base122.html": {
+      "bytes": 12249,
+      "KiB": 11.9619140625,
+      "gzipBytes": 11044,
+      "sha256": "d42bf660831d2fa9b9edb5e213c2015044298e221fd1594c33bf5d1b114d9dc7",
+      "originalSixBitCharacters": 12890,
+      "binaryBytes": 9668,
+      "encodedUTF8Bytes": 11051,
+      "nativeDecompression": false,
+      "encoding": "Base122",
+      "reconstructedRoadrollerSHA256": "15c0961c39c00a91dac45a0ad07f368c4fda21f86448aa7b5c5c79eeda8f8ec3"
+    }
+  },
+  "artifacts": {
+    "jsnes-lite.min.html": {
+      "bytes": 12249,
+      "sha256": "d42bf660831d2fa9b9edb5e213c2015044298e221fd1594c33bf5d1b114d9dc7"
+    },
+    "jsnes-lite.min.js": {
+      "bytes": 12191,
+      "sha256": "59f5b6ea4a1869193562aa0e417cb74419f0fb756e9ab6162f37d4ecddf3c456"
+    },
+    "jsnes-lite.readable.html": {
+      "bytes": 149949,
+      "sha256": "9b73e889a2a39d6ba9a027a7b698c636a01b17131413e322c295fc3214964470"
+    },
+    "jsnes-lite.readable.js": {
+      "bytes": 149961,
+      "sha256": "c9d1932587d6cbb24307813d22d65e2a204d96c78ceb08b888864a3a0cc665c5"
+    },
+    "jsnes-lite.min.html.gz": {
+      "bytes": 11044,
+      "sha256": "41f4dc2b4bca95cc8ae90c1d25eeafe2cede898d19acbd161b77e46ae16cd3c5"
+    }
+  }
+}

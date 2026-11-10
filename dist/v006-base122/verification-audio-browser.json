@@ -1,0 +1,172 @@
+[
+  {
+    "file": "jsnes-lite.min.html",
+    "errors": [],
+    "http": [],
+    "initialWorkletStats": [
+      3,
+      0.4914057336859726,
+      19200,
+      0,
+      0,
+      3959,
+      0.509234607219696,
+      0,
+      1,
+      48000,
+      5,
+      3072,
+      4096
+    ],
+    "measuredFPS": 60.32775076405697,
+    "threaded": {
+      "before": 72448,
+      "after": 76288,
+      "advanced": 3840
+    },
+    "mutedPeak": 0,
+    "pausedPeak": 0,
+    "contexts": 1,
+    "nodes": 1,
+    "rate": 48000,
+    "state": "running",
+    "secure": true,
+    "processorErrors": []
+  },
+  {
+    "file": "roadroller-binary-base122.html",
+    "errors": [],
+    "http": [],
+    "initialWorkletStats": [
+      3,
+      0.23251473787979238,
+      21120,
+      0,
+      0,
+      4435,
+      0.509234607219696,
+      0,
+      15,
+      48000,
+      5,
+      3072,
+      4096
+    ],
+    "measuredFPS": 59.341844992543976,
+    "threaded": {
+      "before": 74880,
+      "after": 78720,
+      "advanced": 3840
+    },
+    "mutedPeak": 0,
+    "pausedPeak": 0,
+    "contexts": 1,
+    "nodes": 1,
+    "rate": 48000,
+    "state": "running",
+    "secure": true,
+    "processorErrors": []
+  },
+  {
+    "file": "roadroller-gzip-base122.html",
+    "errors": [],
+    "http": [],
+    "initialWorkletStats": [
+      3,
+      0.425371702962818,
+      20608,
+      0,
+      0,
+      3350,
+      0.509234607219696,
+      0,
+      14,
+      48000,
+      5,
+      3072,
+      4096
+    ],
+    "measuredFPS": 58.91416659049913,
+    "threaded": {
+      "before": 71957,
+      "after": 76181,
+      "advanced": 4224
+    },
+    "mutedPeak": 0,
+    "pausedPeak": 0,
+    "contexts": 1,
+    "nodes": 1,
+    "rate": 48000,
+    "state": "running",
+    "secure": true,
+    "processorErrors": []
+  },
+  {
+    "file": "closure-deflate-base122.html",
+    "errors": [],
+    "http": [],
+    "initialWorkletStats": [
+      3,
+      0.806030062175663,
+      21120,
+      0,
+      0,
+      4435,
+      0.509234607219696,
+      0,
+      15,
+      48000,
+      5,
+      3072,
+      4096
+    ],
+    "measuredFPS": 59.13978494623656,
+    "threaded": {
+      "before": 75392,
+      "after": 79232,
+      "advanced": 3840
+    },
+    "mutedPeak": 0,
+    "pausedPeak": 0,
+    "contexts": 1,
+    "nodes": 1,
+    "rate": 48000,
+    "state": "running",
+    "secure": true,
+    "processorErrors": []
+  },
+  {
+    "file": "roadroller-deflate-base64.html",
+    "errors": [],
+    "http": [],
+    "initialWorkletStats": [
+      3,
+      0.4661067048342271,
+      21120,
+      0,
+      0,
+      4435,
+      0.509234607219696,
+      0,
+      15,
+      48000,
+      5,
+      3072,
+      4096
+    ],
+    "measuredFPS": 59.81511690942618,
+    "threaded": {
+      "before": 74368,
+      "after": 78208,
+      "advanced": 3840
+    },
+    "mutedPeak": 0,
+    "pausedPeak": 0,
+    "contexts": 1,
+    "nodes": 1,
+    "rate": 48000,
+    "state": "running",
+    "secure": true,
+    "processorErrors": []
+  }
+]

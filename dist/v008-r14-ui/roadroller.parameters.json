@@ -1,0 +1,56 @@
+{
+  "options": {
+    "sparseSelectors": [
+      0,
+      1,
+      2,
+      3,
+      7,
+      13,
+      14,
+      25,
+      42,
+      48,
+      177,
+      484
+    ],
+    "maxMemoryMB": 150,
+    "precision": 14,
+    "modelMaxCount": 4,
+    "modelRecipBaseCount": 14,
+    "recipLearningRate": 930,
+    "resourcePool": {
+      "arrayBuffers": {},
+      "wasmRunners": {}
+    },
+    "numAbbreviations": 15,
+    "dynamicModels": 0,
+    "allowFreeVars": false
+  },
+  "optimization": {
+    "elapsedMsecs": 49914.369,
+    "best": {
+      "modelRecipBaseCount": 14,
+      "modelMaxCount": 4,
+      "dynamicModels": 0,
+      "numAbbreviations": 15,
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        7,
+        13,
+        14,
+        25,
+        42,
+        48,
+        177,
+        484
+      ],
+      "precision": 14,
+      "recipLearningRate": 930
+    },
+    "bestSize": 14648
+  }
+}

@@ -1,0 +1,7 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>JSNES lite</title>
+<h3>JSNES lite</h3><canvas id=frameCanvas width=256 height=240></canvas>
+<p><input type=file id=fileInput accept=.nes></p>
+<p><button id=b_play>Play</button> <button id=b_pause>Pause</button> <button id=b_reset>Reset</button> <button id=b_audio>Enable audio</button> <label><input type=checkbox id=i_audio checked>Sound</label></p>
+<p id=loadStatus role=status>Select a local ROM.</p><p id=audioStatus role=status></p>
+<p>Arrow keys: move; X: A; C: B; Enter: Start; Esc: Select.</p>
+<style>body{font:14px Arial;background:#888}canvas{background:#000;image-rendering:pixelated;max-width:100%}</style>

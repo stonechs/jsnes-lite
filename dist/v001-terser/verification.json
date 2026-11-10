@@ -1,0 +1,42 @@
+[
+  {
+    "file": "jsnes-lite-standalone.html",
+    "errors": [],
+    "network": [],
+    "mapper": 0,
+    "frames": 121,
+    "hashes": [
+      501643165,
+      501643165
+    ],
+    "colors": 4,
+    "audioContexts": [
+      "running",
+      "running",
+      "running",
+      "running",
+      "running"
+    ],
+    "externalScripts": 0
+  },
+  {
+    "file": "jsnes-lite-standalone.min.html",
+    "errors": [],
+    "network": [],
+    "mapper": 0,
+    "frames": 121,
+    "hashes": [
+      501643165,
+      501643165
+    ],
+    "colors": 4,
+    "audioContexts": [
+      "running",
+      "running",
+      "running",
+      "running",
+      "running"
+    ],
+    "externalScripts": 0
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "file": "jsnes-lite.min.js",
+    "errors": [],
+    "autoStart": true,
+    "pausedCorrectly": true,
+    "resetAndStep": true,
+    "hash": 1863927830,
+    "colors": 3
+  },
+  {
+    "file": "jsnes-lite.readable.js",
+    "errors": [],
+    "autoStart": true,
+    "pausedCorrectly": true,
+    "resetAndStep": true,
+    "hash": 1863927830,
+    "colors": 3
+  }
+]

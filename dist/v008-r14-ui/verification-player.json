@@ -1,0 +1,48 @@
+[
+  {
+    "file": "jsnes-lite.readable.html",
+    "peak": 0.0518035888671875,
+    "mutePeak": 0,
+    "threaded": {
+      "elapsed": 0.05066666666666664,
+      "peak": 0.05195312574505806
+    },
+    "archiveResults": [
+      "stored.zip",
+      "deflate.zip",
+      "stored.7z",
+      "lzma.7z",
+      "lzma2.7z"
+    ],
+    "drop": true,
+    "invalidROMHandled": true,
+    "contexts": 1,
+    "nodes": 1,
+    "processorErrors": [],
+    "errors": [],
+    "http": []
+  },
+  {
+    "file": "jsnes-lite.min.html",
+    "peak": 0.05179290473461151,
+    "mutePeak": 0,
+    "threaded": {
+      "elapsed": 0.04800000000000004,
+      "peak": 0.05195312574505806
+    },
+    "archiveResults": [
+      "stored.zip",
+      "deflate.zip",
+      "stored.7z",
+      "lzma.7z",
+      "lzma2.7z"
+    ],
+    "drop": true,
+    "invalidROMHandled": true,
+    "contexts": 1,
+    "nodes": 1,
+    "processorErrors": [],
+    "errors": [],
+    "http": []
+  }
+]

@@ -1,0 +1,14 @@
+✔ r14 archive reader: stored.zip (14.5974ms)
+✔ r14 archive reader: deflate.zip (31.7069ms)
+✔ r14 archive reader: stored.7z (14.7117ms)
+✔ r14 archive reader: lzma.7z (8.8178ms)
+✔ r14 archive reader: lzma2.7z (9.4853ms)
+✔ r14 archive reader rejects corrupted CRC and incomplete archives (1.5982ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 280.0086

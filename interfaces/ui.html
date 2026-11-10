@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JSNES lite 播放器</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#111315;color:#f0f1f2;font:16px system-ui,sans-serif;color-scheme:dark}main{width:min(100%,680px);margin:auto;padding:clamp(12px,3vw,24px);display:flex;flex-direction:column;gap:12px}header{flex-wrap:wrap}#mute[aria-pressed=true]{background:#a9efbd;color:#101710}header,footer{display:flex;align-items:center;gap:8px}h1{font-size:1.2rem;letter-spacing:.08em;margin:0 auto 0 0}button{border:1px solid #555a60;color:inherit;background:#282c30;border-radius:6px;cursor:pointer;padding:.55rem .8rem;font:inherit}button:focus-visible{outline:2px solid #9cf3bd}kbd{font:.78rem ui-monospace,monospace;color:#bad0c2}canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}.screen{aspect-ratio:256/240;background:#000;min-height:0;max-height:calc(100dvh - 190px)}#pads{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}.pad{display:grid;gap:4px;justify-items:center;padding:.4rem .2rem;touch-action:none;user-select:none}.pad[aria-pressed=true]{color:#101710;background:#a9efbd}.pad[aria-pressed=true] kbd{color:#224b30}#status{font-size:.85rem;color:#bac1c5;overflow-wrap:anywhere;margin:0}main:fullscreen{width:100%;height:100%;background:#111315;gap:6px;padding:8px 14px}main:fullscreen .screen{flex:1;aspect-ratio:auto;max-height:none}@media(max-width:480px){#pads{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<main>
+<header><h1>JSNES lite</h1><input id="rom" type="file" accept=".nes" hidden><button id="choose" type="button">选择 ROM</button><button id="mute" type="button" aria-label="静音" aria-pressed="false">静音</button><button id="full" type="button" aria-pressed="false" aria-keyshortcuts="F">全屏 <kbd>F</kbd></button></header>
+<div class="screen"><canvas width="256" height="240" aria-label="NES 游戏画面"></canvas></div>
+<div id="pads" role="group" aria-label="游戏手柄及对应键盘按键"></div>
+<p id="status" role="status">选择或拖入 .nes ROM 文件。</p>
+</main>

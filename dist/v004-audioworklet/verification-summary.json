@@ -1,0 +1,29 @@
+{
+  "byteExactRoadrollerReproduction": true,
+  "oldVersionsUnchanged": {
+    "dist/v001-terser": true,
+    "dist/v002-closure-roadroller": true,
+    "dist/v003-mappers-1-4": true
+  },
+  "unitGroupsPassed": 17,
+  "unitFailures": 0,
+  "cpuSmokeROMSPassed": 4,
+  "canvasHashesMatchV003": true,
+  "optimizedCanvasHashesMatchReference": true,
+  "verifiedOptimizedArtifactsMatchCurrentFiles": true,
+  "audioWorkletBrowserVersionsPassed": [
+    "jsnes-lite.readable.html",
+    "closure.min.html",
+    "jsnes-lite.min.html"
+  ],
+  "standaloneJSPassed": true,
+  "knownFailures": [
+    {
+      "name": "4-scanline_timing",
+      "status": 3,
+      "message": "\nScanline 0 IRQ should occur sooner when $2000=$08\n\n4-scanline_timing\n\nFailed #3\n"
+    }
+  ],
+  "scriptErrors": [],
+  "networkRequests": []
+}

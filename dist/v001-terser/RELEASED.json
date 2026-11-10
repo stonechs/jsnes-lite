@@ -1,0 +1,51 @@
+{
+  "version": "v001",
+  "date": "2026-11-10",
+  "status": "finalized-do-not-overwrite",
+  "files": {
+    "README.md": {
+      "bytes": 562,
+      "sha256": "3f9a71e803f310434313d5b988e8b5089d0583ea52dc195d31f2183cc755e870"
+    },
+    "jsnes-lite-standalone.html": {
+      "bytes": 96083,
+      "sha256": "92794d2ee43e54b9f777d1156395abd5faed8fba78ffeb373a82f6a3fd24ae64"
+    },
+    "jsnes-lite-standalone.html.gz": {
+      "bytes": 23937,
+      "sha256": "cf676c5c2b5d71d2959b869db4f43c3bcd39270b851d761237b97ae9e2591c16"
+    },
+    "jsnes-lite-standalone.html.png": {
+      "bytes": 18849,
+      "sha256": "d0951bf543616a68cf18cdd59ae26314455a20019ff136103b5fbb42f557a467"
+    },
+    "jsnes-lite-standalone.min.html": {
+      "bytes": 15501,
+      "sha256": "343822b5ecea09ea8c96ed3c6b6e9e62b203f1bbe4eaf83c23cea0186a317879"
+    },
+    "jsnes-lite-standalone.min.html.gz": {
+      "bytes": 5784,
+      "sha256": "91ba7cbca8160fc4b2cfcc0f9b60989f2f18459173ea9f9cc83519052d0a504b"
+    },
+    "jsnes-lite-standalone.min.html.png": {
+      "bytes": 18849,
+      "sha256": "d0951bf543616a68cf18cdd59ae26314455a20019ff136103b5fbb42f557a467"
+    },
+    "jsnes-lite.min.js": {
+      "bytes": 14738,
+      "sha256": "e2cb7f758c847d7e629f8e8ecae7abb9181cbcd0ca95135a778887ba67734cec"
+    },
+    "jsnes-lite.readable.js": {
+      "bytes": 95320,
+      "sha256": "2547f14375eb97033ca17730ad60f0c5540d65e9c7a119f63ce60d17dfa82dc5"
+    },
+    "sizes.json": {
+      "bytes": 385,
+      "sha256": "aa1540545f3b76df8119dd4871ddaae71dbf2cf6b06a67aead38cfbdaa71de0d"
+    },
+    "verification.json": {
+      "bytes": 679,
+      "sha256": "424d7a7ef22ccbe1ac1f70ae965766d1845278b59d8f5f464d1810c364a08241"
+    }
+  }
+}

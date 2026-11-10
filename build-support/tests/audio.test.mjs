@@ -1,0 +1,90 @@
+import assert from 'node:assert/strict';
+import {test} from 'node:test';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import ReferenceAPU from '../references/jsnes/src/papu/index.js';
+import {lite,load,makeROM} from './helpers.mjs';
+
+test('JSNES APU import is byte-identical to the pinned source modules',()=>{
+ for(const name of ['index','channel-square','channel-triangle','channel-noise','channel-dm']){
+  assert.ok(fs.readFileSync('src/jsnes-apu/'+name+'.js').equals(fs.readFileSync('references/jsnes/src/papu/'+name+'.js')));
+ }
+});
+test('APU bridge reproduces JSNES stereo PCM for pulse, triangle, noise and DMC',()=>{
+ const c=lite();load(c,makeROM(0,2,0));c.apu_reset=vm.runInContext('apu_reset',c);
+ // helpers normally stub reset for mapper-only tests; reconstruct the bridge.
+ vm.runInContext(fs.readFileSync('src/papu.js','utf8'),c);c.apu_reset();
+ const actual=[],expected=[];c.apu_host.opts.onAudioSample=(l,r)=>actual.push([l,r]);
+ const host={opts:{sampleRate:44100,onAudioSample:(l,r)=>expected.push([l,r])},cpu:{IRQ_NORMAL:0,dataBus:0,instrBusCycles:0,apuCatchupCycles:0,requestIrq(){},haltCycles(){}},mmap:{load:a=>c.memory_read(a)}};
+ const reference=new ReferenceAPU(host);
+ const writes=[[0x4017,0x40],[0x4015,31],[0x4000,0xbf],[0x4002,253],[0x4003,8],[0x4004,0x5a],[0x4006,170],[0x4007,8],[0x4008,0xff],[0x400a,110],[0x400b,8],[0x400c,0x1c],[0x400e,4],[0x400f,8],[0x4010,0x4f],[0x4011,50],[0x4012,0],[0x4013,1],[0x4015,31]];
+ for(const [address,value]of writes){c.c=0;c.apu_write(address,value);reference.writeReg(address,value)}
+ for(let i=0;i<30000;i++){c.apu_clock(4);reference.clockFrameCounter(4)}
+ assert.equal(actual.length,expected.length);assert.ok(actual.length>2000);assert.deepEqual(actual,expected);
+ assert.ok(actual.some(([l,r])=>Math.abs(l)>.01&&l!==r));assert.ok(actual.every(s=>s.every(Number.isFinite)));
+ assert.ok(c.apu_stalls>0,'DMC must request CPU stalls');
+});
+test('APU IRQ levels, status acknowledgement, DMC enable and actual sample rate',()=>{
+ const c=lite();load(c,makeROM(0,2,0));vm.runInContext(fs.readFileSync('src/papu.js','utf8'),c);c.apu_reset();
+ c.apu_device.frameIrqActive=true;c.apu_device.frameIrqEnabled=true;assert.ok(c.apu_irq_pending());
+ c.c=0;assert.equal(c.apu_read()&64,64);c.apu_clock(2);assert.equal(c.apu_irq_pending(),false);
+ c.apu_write(0x4010,0x8f);c.apu_write(0x4012,0);c.apu_write(0x4013,0);c.apu_write(0x4015,16);
+ assert.ok(c.apu_device.dmc.irqGenerated);assert.ok(c.apu_irq_pending());
+ c.apu_write(0x4015,0);assert.equal(c.apu_device.dmc.irqGenerated,false);
+ c.apu_set_sample_rate(48000);assert.equal(c.apu_device.sampleRate,48000);assert.equal(c.apu_host.opts.sampleRate,48000);
+ c.apu_stalls=12;c.apu_reset();assert.equal(c.apu_stalls,0);
+});
+function processor(){
+ let Klass;const replies=[];
+ class AudioWorkletProcessor{constructor(){this.port={postMessage:value=>replies.push(value)}}}
+ const context=vm.createContext({AudioWorkletProcessor,registerProcessor:(name,value)=>{assert.equal(name,'lite-nes-audio');Klass=value},Float32Array,sampleRate:48000});
+ vm.runInContext(fs.readFileSync('src/audio-worklet.js','utf8'),context);
+ const instance=new Klass();const message=data=>instance.port.onmessage({data});
+ const render=()=>{const output=[new Float32Array(128),new Float32Array(128)];assert.equal(instance.process([],[output]),true);return output};
+ return{instance,message,render,replies};
+}
+test('Worklet priming, stereo order, gain/mute, pause and reset discard old audio',()=>{
+ const p=processor();p.message([1,true]);
+ p.message([0,new Float32Array(128).fill(.5),new Float32Array(128).fill(-.5)]);
+ assert.equal(p.render()[0][0],0);assert.equal(p.instance.count,128);
+ p.message([0,new Float32Array(4096).fill(.5),new Float32Array(4096).fill(-.5)]);
+ const [l,r]=p.render();assert.ok(Math.abs(l[127]-.35)<1e-6);assert.ok(Math.abs(r[127]+.35)<1e-6);
+ assert.ok(l[0]>0&&l[0]<l[31],'The startup edge should fade in');
+ p.message([2,0]);assert.equal(p.render()[0][0],0);
+ p.message([1,false]);assert.equal(p.instance.count,0);assert.ok(p.render().every(a=>a.every(v=>v===0)));
+ p.message([0,new Float32Array(2000).fill(.9),new Float32Array(2000).fill(.9)]);assert.equal(p.instance.count,0);
+ p.message([1,true]);assert.equal(p.render()[0][0],0);
+});
+test('Worklet overflow remains bounded, keeps newest samples, underrun outputs zero',()=>{
+ const p=processor();p.message([1,true]);p.message([2,1]);
+ const data=Float32Array.from({length:10000},(_,i)=>i/10000);
+ p.message([0,data,data]);assert.equal(p.instance.count,8192);
+ assert.ok(Math.abs(p.render()[0][64]-data[1808+64])<1e-7);
+ for(let i=0;i<64;i++)p.render();assert.equal(p.instance.count,0);
+ assert.ok(p.render().every(a=>a.every(v=>v===0)));
+
+});
+test('Worklet low-water feedback is bounded and old ROM generations are rejected',()=>{
+ const p=processor();p.message([1,true,7]);p.render();p.render();
+ assert.equal(p.replies.filter(m=>m[0]===4).length,1);
+ p.message([0,new Float32Array(4096),new Float32Array(4096),6]);assert.equal(p.instance.count,0);
+ p.message([5,6]);p.render();assert.equal(p.replies.filter(m=>m[0]===4).length,1);
+ p.message([5,7]);p.render();assert.equal(p.replies.filter(m=>m[0]===4).length,2);
+ p.message([0,new Float32Array(4096).fill(.5),new Float32Array(4096).fill(.5),7]);
+ p.render();assert.ok(p.instance.primed);
+ p.message([1,false,8]);const tail=p.render()[0];assert.ok(tail[0]>0&&tail[31]===0);
+ assert.ok(p.render().every(a=>a.every(v=>v===0)));
+});
+test('Low-water refill advances the video deadline and cannot restart a paused/old stream',()=>{
+ const c=lite();let frames=0;const messages=[];
+ c.NES.frame=()=>frames++;c.audio_context={sampleRate:48000};
+ c.audio_node={port:{postMessage:m=>messages.push(m)}};
+ c.audio_stream=9;c.audio_playing=false;c.NES.loop=123;
+ c.audio_refill(9,3000);assert.equal(frames,0);
+ c.audio_playing=true;c.audio_refill(8,3000);assert.equal(frames,0);
+ const initial=performance.now();c.NES.nextFrameAt=initial;c.NES.loop=setTimeout(()=>{},1000);
+ c.audio_refill(9,3000);clearTimeout(c.NES.loop);c.NES.loop=null;
+ assert.equal(frames,2);assert.equal(c.NES.nextFrameAt,initial+2*c.NES.frameTime);
+ assert.deepEqual(Array.from(messages[0]),[5,9]);
+ c.audio_refill(9,0);assert.equal(frames,2);
+});

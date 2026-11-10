@@ -1,0 +1,32 @@
+[
+  {
+    "file": "jsnes-lite.readable.html",
+    "peak": 0.05182494968175888,
+    "mutePeak": 0,
+    "threaded": {
+      "elapsed": 0.05066666666666664,
+      "peak": 0.05182494968175888
+    },
+    "pauseReset": true,
+    "contexts": 1,
+    "nodes": 1,
+    "processorErrors": [],
+    "errors": [],
+    "http": []
+  },
+  {
+    "file": "jsnes-lite.min.html",
+    "peak": 0.05179290473461151,
+    "mutePeak": 0,
+    "threaded": {
+      "elapsed": 0.04800000000000004,
+      "peak": 0.05195312574505806
+    },
+    "pauseReset": true,
+    "contexts": 1,
+    "nodes": 1,
+    "processorErrors": [],
+    "errors": [],
+    "http": []
+  }
+]

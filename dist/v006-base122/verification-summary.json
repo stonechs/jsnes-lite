@@ -1,0 +1,36 @@
+{
+  "oldVersionsUnchanged": {
+    "v001-terser": true,
+    "v002-closure-roadroller": true,
+    "v003-mappers-1-4": true,
+    "v004-audioworklet": true,
+    "v005-audio-stability": true
+  },
+  "unitPassed": true,
+  "originalRoadrollerRestored": true,
+  "candidatesMatchRecordedSizes": true,
+  "coreUnchanged": true,
+  "canvasHashesMatchV005": true,
+  "audioWorkletOfflinePassed": true,
+  "standaloneJSPassed": true,
+  "fieldCombatSmokePassed": true,
+  "fieldCombatObservations": [
+    {
+      "baseline": {
+        "underruns": 0,
+        "dropped": 13,
+        "fps": 60.14422645348551
+      },
+      "jank": {
+        "underruns": 0,
+        "dropped": 9,
+        "fps": 60.05737713054779
+      },
+      "initialDropped": 3365
+    }
+  ],
+  "finalHTMLBytes": 12249,
+  "knownLimitations": [
+    "MMC3 precise scanline timing test still fails, unchanged from v005."
+  ]
+}

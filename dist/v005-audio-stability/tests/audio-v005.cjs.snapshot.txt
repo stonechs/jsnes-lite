@@ -1,0 +1,76 @@
+const fs=require('node:fs'),path=require('node:path');
+const {pathToFileURL}=require('node:url');
+const {chromium}=require('C:/Users/maco/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+process.chdir(path.resolve(__dirname,'..'));
+const out='dist/v005-audio-stability';
+fs.mkdirSync('tests/roms',{recursive:true});
+// Original steady pulse-tone ROM, not commercial game data.
+const tone=new Uint8Array(32784);tone.set([78,69,83,26,2,0]);tone.fill(0xea,16);
+const code=[];const store=(a,v)=>code.push(0xa9,v,0x8d,a&255,a>>8);
+code.push(0x78,0xd8,0xa2,255,0x9a);store(0x2000,0);store(0x2001,0);
+store(0x4017,64);store(0x4015,1);store(0x4000,0xbf);store(0x4002,253);store(0x4003,8);
+const loop=0xe100+code.length;code.push(0x4c,loop&255,loop>>8);tone.set(code,16+0x6100);tone.set([0x40],16+0x6180);tone.set([0x80,0xe1,0,0xe1,0x80,0xe1],16+0x7ffa);
+fs.writeFileSync('tests/roms/audio-pulse.nes',tone);
+(async()=>{
+ const browser=await chromium.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true});
+ const results=[];
+ const targets=process.argv.slice(2).length?process.argv.slice(2):['jsnes-lite.readable.html','closure.min.html','jsnes-lite.min.html'];
+ try{for(const target of targets){
+  const context=await browser.newContext({offline:true});const page=await context.newPage();const errors=[],http=[];
+  page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(/^https?:/.test(r.url()))http.push(r.url())});
+  await page.addInitScript(()=>{
+   window.__contexts=[];window.__nodes=[];window.__processorErrors=[];
+   const put=CanvasRenderingContext2D.prototype.putImageData;window.__frames=0;
+   CanvasRenderingContext2D.prototype.putImageData=function(...args){if(this.canvas.id==='frameCanvas')window.__frames++;return put.apply(this,args)};
+   const Context=window.AudioContext,Node=window.AudioWorkletNode;
+   window.AudioContext=class extends Context{constructor(...args){super(...args);window.__contexts.push(this)}};
+   window.AudioWorkletNode=class extends Node{constructor(...args){super(...args);window.__nodes.push(this);this.addEventListener('processorerror',()=>window.__processorErrors.push('processorerror'))}};
+   Context.prototype.createScriptProcessor=()=>{throw Error('Deprecated ScriptProcessor must not be used')};
+   window.OscillatorNode=class{constructor(){throw Error('Legacy oscillator must not be used')}};
+   window.__stats=()=>new Promise((resolve,reject)=>{
+    const node=window.__nodes[0],token=Math.random(),timer=setTimeout(()=>reject(Error('Worklet reply timed out')),3000);
+    const handler=e=>{if(e.data[0]===3&&e.data[1]===token){clearTimeout(timer);node.port.removeEventListener('message',handler);resolve(e.data)}};
+    node.port.addEventListener('message',handler);node.port.start();node.port.postMessage([3,token]);
+   });
+  });
+  await page.goto(pathToFileURL(path.resolve(out,target)).href);
+  await page.locator('#b_audio').click();
+  await page.waitForFunction(()=>document.getElementById('audioStatus').textContent==='Audio ready');
+  await page.locator('#fileInput').setInputFiles('tests/roms/audio-pulse.nes');
+  await page.waitForFunction(()=>document.getElementById('loadStatus').textContent.includes('loaded'));
+  await page.waitForTimeout(450);
+  const initial=await page.evaluate(()=>window.__stats());
+  if(initial[2]===0||initial[6]<.001)throw Error('Worklet did not output nonzero APU audio: '+JSON.stringify(initial));
+  const paceBefore=await page.evaluate(()=>({frames:window.__frames,time:performance.now()}));
+  await page.waitForTimeout(1100);
+  const pace=await page.evaluate(before=>({fps:(window.__frames-before.frames)*1000/(performance.now()-before.time)}),paceBefore);
+  if(pace.fps<55||pace.fps>65)throw Error('Unexpected host frame rate: '+pace.fps);
+  // A full queue continues rendering while JS on the main thread is blocked.
+  const threaded=await page.evaluate(async()=>{
+   const node=window.__nodes[0],samples=Float32Array.from({length:8192},(_,i)=>.25*Math.sin(i*.057));
+   const current=await window.__stats();node.port.postMessage([1,true,current[10]]);node.port.postMessage([0,samples,samples,current[10]]);
+   const before=await window.__stats(),start=performance.now();
+   while(performance.now()-start<80){}
+   const after=await window.__stats();return{before:before[2],after:after[2],advanced:after[2]-before[2]};
+  });
+  if(threaded.advanced<512)throw Error('Audio rendering did not continue off the main thread');
+  await page.evaluate(()=>{const analyser=new AnalyserNode(window.__contexts[0],{fftSize:2048});window.__nodes[0].connect(analyser);window.__analyser=analyser});
+  await page.locator('#i_audio').uncheck();await page.waitForTimeout(120);
+  const mutedPeak=await page.evaluate(()=>{const a=new Float32Array(2048);window.__analyser.getFloatTimeDomainData(a);return Math.max(...a.map(Math.abs))});
+  if(mutedPeak>1e-6)throw Error('Mute left audible samples: '+mutedPeak);
+  await page.locator('#i_audio').check();await page.waitForTimeout(100);
+  await page.locator('#b_pause').click();await page.waitForTimeout(120);
+  const paused=await page.evaluate(async()=>{const a=new Float32Array(2048);window.__analyser.getFloatTimeDomainData(a);return{peak:Math.max(...a.map(Math.abs)),stats:await window.__stats()}});
+  if(paused.peak>1e-6||paused.stats[5]!==0)throw Error('Pause did not clear old audio');
+  await page.locator('#b_reset').click();await page.locator('#b_play').click();await page.waitForTimeout(100);
+  await page.locator('#fileInput').setInputFiles('upstream/roms/croom/croom.nes');
+  await page.waitForFunction(()=>document.getElementById('loadStatus').textContent.includes('loaded'));
+  const detail=await page.evaluate(()=>({contexts:window.__contexts.length,nodes:window.__nodes.length,rate:window.__contexts[0].sampleRate,state:window.__contexts[0].state,secure:window.isSecureContext,processorErrors:window.__processorErrors}));
+  if(detail.contexts!==1||detail.nodes!==1||detail.processorErrors.length)throw Error('Context/node lifecycle failure: '+JSON.stringify(detail));
+  await page.locator('#b_pause').click();await page.screenshot({path:out+'/'+target+'.audio.png'});
+  const result={file:target,errors,http,initialWorkletStats:initial,measuredFPS:pace.fps,threaded,mutedPeak,pausedPeak:paused.peak,...detail};
+  results.push(result);console.log(JSON.stringify(result));await context.close();
+ }}finally{await browser.close()}
+ fs.writeFileSync(out+'/verification-audio-browser.json',JSON.stringify(results,null,2)+'\n');
+ if(results.some(r=>r.errors.length||r.http.length))process.exitCode=1;
+})().catch(e=>{console.error(e);process.exitCode=1});

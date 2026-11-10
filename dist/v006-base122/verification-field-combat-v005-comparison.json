@@ -1,0 +1,71 @@
+[
+  {
+    "directory": "dist/v005-audio-stability",
+    "artifact": "jsnes-lite.min.html",
+    "file": "D:\\tools\\VirtuaNES Plus 2013\\roms\\00_Top10\\杀戮战场.nes",
+    "errors": [],
+    "sampleRate": 48000,
+    "diagnosticText": "Buffer 87 ms | underruns 2 | dropped 0 | clipping 0 | peak 0.52",
+    "baselineStart": {
+      "rendered": 89216,
+      "dropped": 0,
+      "underruns": 0,
+      "queued": 4229,
+      "peak": 0.517608642578125,
+      "extra": [
+        0,
+        2,
+        48000,
+        5,
+        3072,
+        4096
+      ],
+      "frames": 117,
+      "time": 3297.100000000006
+    },
+    "baselineEnd": {
+      "rendered": 557997,
+      "dropped": 0,
+      "underruns": 2,
+      "queued": 5087,
+      "peak": 0.517608642578125,
+      "extra": [
+        0,
+        12,
+        48000,
+        5,
+        3072,
+        4096
+      ],
+      "frames": 705,
+      "time": 13347.100000000006
+    },
+    "jankEnd": {
+      "rendered": 1049005,
+      "dropped": 0,
+      "underruns": 2,
+      "queued": 3686,
+      "peak": 0.517608642578125,
+      "extra": [
+        0,
+        36,
+        48000,
+        5,
+        3072,
+        4096
+      ],
+      "frames": 1319,
+      "time": 23582.5
+    },
+    "baseline": {
+      "underruns": 2,
+      "dropped": 0,
+      "fps": 58.507462686567166
+    },
+    "jank": {
+      "underruns": 0,
+      "dropped": 0,
+      "fps": 59.987885182796994
+    }
+  }
+]

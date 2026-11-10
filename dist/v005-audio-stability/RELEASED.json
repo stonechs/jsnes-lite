@@ -1,0 +1,415 @@
+{
+  "version": "v005",
+  "date": "2026-11-10",
+  "status": "finalized-do-not-overwrite",
+  "files": {
+    "JSNES-AUTHORS.md": {
+      "bytes": 403,
+      "sha256": "1e0fc79d2aaeda7090e5b37d7b9446020d96520bd6553faad3a67d12cbd95b0c"
+    },
+    "LICENSE-JSNES.txt": {
+      "bytes": 10949,
+      "sha256": "2cbcc2056aa90a60c968327399fa51ff0f30d7078265b9f4bb49424674bd3fdd"
+    },
+    "README.md": {
+      "bytes": 6715,
+      "sha256": "f8e87fe234df304a1962ce0c9027159efd35fa50ed19f69b8b5b659e0881a9af"
+    },
+    "THIRD_PARTY_NOTICES.md": {
+      "bytes": 2429,
+      "sha256": "c350caa2b7a8d618da64dc5c52256d51193d16bc900c2616ec80809a9926d779"
+    },
+    "audio-worklet.min.js": {
+      "bytes": 2427,
+      "sha256": "4627ee85d9cfeed9fea99d461948e654aeb020c0d2052243a4542fb0dbf0ee35"
+    },
+    "audio-worklet.readable.js": {
+      "bytes": 3506,
+      "sha256": "dce29460a62978db2bdb6fde2ac878a43300c452399cbc98ecb1c184495106b6"
+    },
+    "closure.compiler.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "closure.externs.js": {
+      "bytes": 71,
+      "sha256": "02c1dbcf9af71b24df18fec614fe90fd52ee28cab0c2c0827bc7dd30b8772419"
+    },
+    "closure.input.js": {
+      "bytes": 147643,
+      "sha256": "e8eb59f00a56b01159168026cfcff6e5f0113b936dacfc9e5a1c35933e44011a"
+    },
+    "closure.min.html": {
+      "bytes": 29177,
+      "sha256": "a04607d884bc0c596737d558e909b317659a0a18e7fe6861d16715f0c60dab29"
+    },
+    "closure.min.html.1-clocking.png": {
+      "bytes": 21498,
+      "sha256": "2621cad76d4cf1a3a5eba7ab5d28700366bce77f4d866bdc6c13bd0b958d7430"
+    },
+    "closure.min.html.2-details.png": {
+      "bytes": 21507,
+      "sha256": "3b21b63ecc16cf91c25e40ae306d3f149a3729999b95cd72d37d8cac17507b72"
+    },
+    "closure.min.html.3-A12_clocking.png": {
+      "bytes": 21835,
+      "sha256": "479bb3a7001d63fef1cbdba30159535d5407551b37654ef6743a39e9af26d23f"
+    },
+    "closure.min.html.4-scanline_timing.png": {
+      "bytes": 22585,
+      "sha256": "5511baed631aed8af134985d2a1713591cecff271f3cfe27ec9957daf6b424e2"
+    },
+    "closure.min.html.5-MMC3.png": {
+      "bytes": 21488,
+      "sha256": "f28dd495b8b885f8af6c2612d4fcae7b90f3e6b02832be1f24aa06aea8ec9100"
+    },
+    "closure.min.html.MMC1_A12.png": {
+      "bytes": 23069,
+      "sha256": "ebf80de3c1b653ed8d0cb1ed8cd85e1d8f04421f68190cad512917206abd408d"
+    },
+    "closure.min.html.audio.png": {
+      "bytes": 25499,
+      "sha256": "76548c460c3daa57c52c0a142aafb86f21d21498342a07ddf45e9d24cc4a8937"
+    },
+    "closure.min.html.croom.png": {
+      "bytes": 24857,
+      "sha256": "6bdf277926e5d222b8c337d4b60a5e700de2c24b18c52c739b4530b8f6823b88"
+    },
+    "closure.min.html.lj65.png": {
+      "bytes": 24053,
+      "sha256": "252311fd04f6939b1159823078ac1818fdbb59874dd03d2069b7d3900982052b"
+    },
+    "closure.min.html.mapper1.png": {
+      "bytes": 21406,
+      "sha256": "93ad08b2a4e6709365ceb8f5f497bff8ff464b010f3a601a5a958644ee7c3ca8"
+    },
+    "closure.min.html.mapper2.png": {
+      "bytes": 21508,
+      "sha256": "163df84a533b938a20fe8ed39cffd02f0c284c7daa48e06389662b5f53009f08"
+    },
+    "closure.min.html.mapper3.png": {
+      "bytes": 21524,
+      "sha256": "bdb2ff2e02d1b4c607132faf879cf82923d2b095490b4e4d6b4b2c18e3085115"
+    },
+    "closure.min.html.mapper30.png": {
+      "bytes": 22216,
+      "sha256": "37286a50b5abc560cf9c3074aecd3946cd3e1157f9befccd95555014e55e288a"
+    },
+    "closure.min.html.mapper4.png": {
+      "bytes": 21519,
+      "sha256": "40b182cf198dedadbfc291588e8954d9695278ccf4daeb71a7ed59279fb4df3b"
+    },
+    "closure.min.js": {
+      "bytes": 27953,
+      "sha256": "05103b268efe0137aa489bff96e87e710e86575e0a1a626ffc2a34ada267291a"
+    },
+    "field-combat-fixed.png": {
+      "bytes": 28704,
+      "sha256": "f20300a4e487c357ebdb0d1f0558eaabe4fb9bf10cb933ef68b85f44b0d1135e"
+    },
+    "jsnes-lite.min.html": {
+      "bytes": 13636,
+      "sha256": "099fa4f87b629d98d33cb0e5fc5a694a9d642faa6ce2dc81a604df99dd692e65"
+    },
+    "jsnes-lite.min.html.1-clocking.png": {
+      "bytes": 21498,
+      "sha256": "2621cad76d4cf1a3a5eba7ab5d28700366bce77f4d866bdc6c13bd0b958d7430"
+    },
+    "jsnes-lite.min.html.2-details.png": {
+      "bytes": 21507,
+      "sha256": "3b21b63ecc16cf91c25e40ae306d3f149a3729999b95cd72d37d8cac17507b72"
+    },
+    "jsnes-lite.min.html.3-A12_clocking.png": {
+      "bytes": 21835,
+      "sha256": "479bb3a7001d63fef1cbdba30159535d5407551b37654ef6743a39e9af26d23f"
+    },
+    "jsnes-lite.min.html.4-scanline_timing.png": {
+      "bytes": 22585,
+      "sha256": "5511baed631aed8af134985d2a1713591cecff271f3cfe27ec9957daf6b424e2"
+    },
+    "jsnes-lite.min.html.5-MMC3.png": {
+      "bytes": 21488,
+      "sha256": "f28dd495b8b885f8af6c2612d4fcae7b90f3e6b02832be1f24aa06aea8ec9100"
+    },
+    "jsnes-lite.min.html.MMC1_A12.png": {
+      "bytes": 23069,
+      "sha256": "ebf80de3c1b653ed8d0cb1ed8cd85e1d8f04421f68190cad512917206abd408d"
+    },
+    "jsnes-lite.min.html.audio.png": {
+      "bytes": 25499,
+      "sha256": "76548c460c3daa57c52c0a142aafb86f21d21498342a07ddf45e9d24cc4a8937"
+    },
+    "jsnes-lite.min.html.croom.png": {
+      "bytes": 24857,
+      "sha256": "6bdf277926e5d222b8c337d4b60a5e700de2c24b18c52c739b4530b8f6823b88"
+    },
+    "jsnes-lite.min.html.gz": {
+      "bytes": 10451,
+      "sha256": "203fac75c8533bfdaf839488efe9899d5ff454ebd1e1fb8c1e2e78890b1f3820"
+    },
+    "jsnes-lite.min.html.lj65.png": {
+      "bytes": 24053,
+      "sha256": "252311fd04f6939b1159823078ac1818fdbb59874dd03d2069b7d3900982052b"
+    },
+    "jsnes-lite.min.html.mapper1.png": {
+      "bytes": 21406,
+      "sha256": "93ad08b2a4e6709365ceb8f5f497bff8ff464b010f3a601a5a958644ee7c3ca8"
+    },
+    "jsnes-lite.min.html.mapper2.png": {
+      "bytes": 21508,
+      "sha256": "163df84a533b938a20fe8ed39cffd02f0c284c7daa48e06389662b5f53009f08"
+    },
+    "jsnes-lite.min.html.mapper3.png": {
+      "bytes": 21524,
+      "sha256": "bdb2ff2e02d1b4c607132faf879cf82923d2b095490b4e4d6b4b2c18e3085115"
+    },
+    "jsnes-lite.min.html.mapper30.png": {
+      "bytes": 22216,
+      "sha256": "37286a50b5abc560cf9c3074aecd3946cd3e1157f9befccd95555014e55e288a"
+    },
+    "jsnes-lite.min.html.mapper4.png": {
+      "bytes": 21519,
+      "sha256": "40b182cf198dedadbfc291588e8954d9695278ccf4daeb71a7ed59279fb4df3b"
+    },
+    "jsnes-lite.min.js": {
+      "bytes": 13578,
+      "sha256": "15c0961c39c00a91dac45a0ad07f368c4fda21f86448aa7b5c5c79eeda8f8ec3"
+    },
+    "jsnes-lite.readable.html": {
+      "bytes": 149949,
+      "sha256": "9b73e889a2a39d6ba9a027a7b698c636a01b17131413e322c295fc3214964470"
+    },
+    "jsnes-lite.readable.html.1-clocking.png": {
+      "bytes": 21498,
+      "sha256": "2621cad76d4cf1a3a5eba7ab5d28700366bce77f4d866bdc6c13bd0b958d7430"
+    },
+    "jsnes-lite.readable.html.2-details.png": {
+      "bytes": 21507,
+      "sha256": "3b21b63ecc16cf91c25e40ae306d3f149a3729999b95cd72d37d8cac17507b72"
+    },
+    "jsnes-lite.readable.html.3-A12_clocking.png": {
+      "bytes": 21835,
+      "sha256": "479bb3a7001d63fef1cbdba30159535d5407551b37654ef6743a39e9af26d23f"
+    },
+    "jsnes-lite.readable.html.4-scanline_timing.png": {
+      "bytes": 22585,
+      "sha256": "5511baed631aed8af134985d2a1713591cecff271f3cfe27ec9957daf6b424e2"
+    },
+    "jsnes-lite.readable.html.5-MMC3.png": {
+      "bytes": 21488,
+      "sha256": "f28dd495b8b885f8af6c2612d4fcae7b90f3e6b02832be1f24aa06aea8ec9100"
+    },
+    "jsnes-lite.readable.html.MMC1_A12.png": {
+      "bytes": 23069,
+      "sha256": "ebf80de3c1b653ed8d0cb1ed8cd85e1d8f04421f68190cad512917206abd408d"
+    },
+    "jsnes-lite.readable.html.audio.png": {
+      "bytes": 25499,
+      "sha256": "76548c460c3daa57c52c0a142aafb86f21d21498342a07ddf45e9d24cc4a8937"
+    },
+    "jsnes-lite.readable.html.croom.png": {
+      "bytes": 24857,
+      "sha256": "6bdf277926e5d222b8c337d4b60a5e700de2c24b18c52c739b4530b8f6823b88"
+    },
+    "jsnes-lite.readable.html.lj65.png": {
+      "bytes": 24053,
+      "sha256": "252311fd04f6939b1159823078ac1818fdbb59874dd03d2069b7d3900982052b"
+    },
+    "jsnes-lite.readable.html.mapper1.png": {
+      "bytes": 21406,
+      "sha256": "93ad08b2a4e6709365ceb8f5f497bff8ff464b010f3a601a5a958644ee7c3ca8"
+    },
+    "jsnes-lite.readable.html.mapper2.png": {
+      "bytes": 21508,
+      "sha256": "163df84a533b938a20fe8ed39cffd02f0c284c7daa48e06389662b5f53009f08"
+    },
+    "jsnes-lite.readable.html.mapper3.png": {
+      "bytes": 21524,
+      "sha256": "bdb2ff2e02d1b4c607132faf879cf82923d2b095490b4e4d6b4b2c18e3085115"
+    },
+    "jsnes-lite.readable.html.mapper30.png": {
+      "bytes": 22216,
+      "sha256": "37286a50b5abc560cf9c3074aecd3946cd3e1157f9befccd95555014e55e288a"
+    },
+    "jsnes-lite.readable.html.mapper4.png": {
+      "bytes": 21519,
+      "sha256": "40b182cf198dedadbfc291588e8954d9695278ccf4daeb71a7ed59279fb4df3b"
+    },
+    "jsnes-lite.readable.js": {
+      "bytes": 149961,
+      "sha256": "c9d1932587d6cbb24307813d22d65e2a204d96c78ceb08b888864a3a0cc665c5"
+    },
+    "roadroller.parameters.json": {
+      "bytes": 875,
+      "sha256": "0aa43185b7432153bccc1d412faa706db752e6c93b7cdb61dad74897b08ad80b"
+    },
+    "sizes.json": {
+      "bytes": 2217,
+      "sha256": "c37dadfda4849f59cf1bf8e3823a83a9bf507936286416a492e8d61fdfc57f9a"
+    },
+    "source/6502.js": {
+      "bytes": 29758,
+      "sha256": "87aa399f207f2eec2d2c48ce8f23ce1956c19e454b4748297085587e31a146ae"
+    },
+    "source/apu-jsnes.js": {
+      "bytes": 51967,
+      "sha256": "8ed9e8d810f223d2fe807ae09c57dde169ee197c1e7e69157152eb66350ac2af"
+    },
+    "source/audio-output.js": {
+      "bytes": 4322,
+      "sha256": "c3a4f8fea7e5774f0e0bbe5a832a8f0d6d3287cf34b5b2e2eba9e5e1e92e7fc5"
+    },
+    "source/audio-worklet.js": {
+      "bytes": 3506,
+      "sha256": "dce29460a62978db2bdb6fde2ac878a43300c452399cbc98ecb1c184495106b6"
+    },
+    "source/build-v005.mjs.snapshot.txt": {
+      "bytes": 5765,
+      "sha256": "b7a51ac9eb6b062175320f13bfe147dfa74150f5b2b5baca2ea195e639d23aba"
+    },
+    "source/controller.js": {
+      "bytes": 1793,
+      "sha256": "3f169bf5cf2c0978429d949b68984020af6d9e6299bee434f15db01f1bdb9559"
+    },
+    "source/cpu.js": {
+      "bytes": 1580,
+      "sha256": "c9c1ec2ad5e7ca0e126b2910d97ef852e260d667af297a1cecabee0d1ea4d3aa"
+    },
+    "source/jsnes-apu/channel-dm.js": {
+      "bytes": 6982,
+      "sha256": "68089047191a0283b492d88b5215f4e51739f2596e95443e43f50e709297cba6"
+    },
+    "source/jsnes-apu/channel-noise.js": {
+      "bytes": 3597,
+      "sha256": "60ffc85a6413b69bde228ab65542ed60f30cb0f63071558f774f5c61ecfed821"
+    },
+    "source/jsnes-apu/channel-square.js": {
+      "bytes": 5812,
+      "sha256": "52db0b9994dc8cb19cdbdbe41922b4d72072730f96078f689a694f4cd6cd49a8"
+    },
+    "source/jsnes-apu/channel-triangle.js": {
+      "bytes": 3629,
+      "sha256": "b385d45d3e90cd5fe8f7dd288d5abf4bc2f2ebf171d4dab17ba150c176470941"
+    },
+    "source/jsnes-apu/index.js": {
+      "bytes": 31192,
+      "sha256": "fe8ede3f3b6709edb503cead3a0def1a1d1ba25cb8fad744e3b5bf25d129ea6b"
+    },
+    "source/jsnes-apu/utils.js": {
+      "bytes": 1192,
+      "sha256": "61a1c24824626edd5191cccbe7acec223d78f7eab861db866a31a07fe70ef8c6"
+    },
+    "source/mappers.js": {
+      "bytes": 5901,
+      "sha256": "42101087ce4af6cdde9270506b3c0d93540c01d7ff2c21a274898bc4fe64bb23"
+    },
+    "source/memory.js": {
+      "bytes": 9537,
+      "sha256": "7e060e54dde3ea9b561287a16e3a9c1b6704b49ff4d1e5d03ce480310e1ea600"
+    },
+    "source/nes.js": {
+      "bytes": 4832,
+      "sha256": "b15cf564e95dde74b6ded8daf7cf1a6beaa8917afbe6af328f061c1050224631"
+    },
+    "source/papu.js": {
+      "bytes": 1884,
+      "sha256": "84563d42618a841a2093fe6543b765d51e48097f6c947d020f0527e94cab4e8b"
+    },
+    "source/ppu.js": {
+      "bytes": 30213,
+      "sha256": "3b4da97dc7bfb23a8cf5d3c6569eaca564cbc65954d77d69785ca0606e8dbb2a"
+    },
+    "source/prepare-apu.mjs.snapshot.txt": {
+      "bytes": 658,
+      "sha256": "493611750744904eaeaba9d8a4254a31994869dba890f848880802cb7ddba9ae"
+    },
+    "source/rom.js": {
+      "bytes": 902,
+      "sha256": "acf15a9fb1cc4b750c88e2e5decdcf5efc9f88d07ecb344d1cc1562924aeeec7"
+    },
+    "source/ui.html": {
+      "bytes": 1205,
+      "sha256": "44ae46a926ddd5be9bc0083d624ec31e20ad646772a542345bc05e5764275310"
+    },
+    "source/ui.js": {
+      "bytes": 2336,
+      "sha256": "449f5352ec6d6f5c6ca82c0a27c41de491156f1e5013fe11a062cb40ea96f38d"
+    },
+    "tests/audio-crackle.cjs.snapshot.txt": {
+      "bytes": 4469,
+      "sha256": "a52f206ecb5be4d18dfd050da71d2f5e2c496fe0b7ed155519fd5704c76d7205"
+    },
+    "tests/audio-v005.cjs.snapshot.txt": {
+      "bytes": 6752,
+      "sha256": "0a03316f1d68e509e022a5a95b93842d9ea6521740d0b7698ce958ee12a66d38"
+    },
+    "tests/audio.test.mjs.snapshot.txt": {
+      "bytes": 6379,
+      "sha256": "ff8083356b79df40ee91c1f8cdf2c59a88d22b31aad5d8f9af50ef3d8653c17e"
+    },
+    "tests/browser-v005.cjs.snapshot.txt": {
+      "bytes": 3822,
+      "sha256": "51c7528338523fafb87b44594777455df1184566ced183e2c8d745c07249e770"
+    },
+    "tests/helpers.mjs.snapshot.txt": {
+      "bytes": 1518,
+      "sha256": "eaa14cb5f49a31e9399608917c5be74ac3da6e8b3a03c66410e1b194275e64c2"
+    },
+    "tests/make-smoke-roms.mjs.snapshot.txt": {
+      "bytes": 2513,
+      "sha256": "6dd13bf03a0d8e654d96c28dae08be2eb7223f888b51d9381aa1d34c90f7c6ce"
+    },
+    "tests/mappers.test.mjs.snapshot.txt": {
+      "bytes": 7649,
+      "sha256": "39ee9fc896a10c31843bf761f55a3342630142213f3888c00ff5b1c922e48988"
+    },
+    "tests/release-v005.mjs.snapshot.txt": {
+      "bytes": 5517,
+      "sha256": "ab14a054032760c6448d8b1a6488fbff3064c89cf488590008f2a377fbf98a69"
+    },
+    "tests/ui-v005.cjs.snapshot.txt": {
+      "bytes": 2853,
+      "sha256": "6ca239e97563a02417172104276403bbf9dc0b26458332efaad1e7cd7fa3a6ab"
+    },
+    "tests/vram-v005.cjs.snapshot.txt": {
+      "bytes": 2029,
+      "sha256": "3c5ad0ae93b377b4df71ac6f1fe93618ee40b10fe5ad73a336989e547579d3f3"
+    },
+    "verification-audio-browser.json": {
+      "bytes": 1740,
+      "sha256": "ec23ee1e7fd8b23293027a7f3ca997fb6cc2cb2e434dd978d379d44bfa597462"
+    },
+    "verification-field-combat.json": {
+      "bytes": 4039,
+      "sha256": "1baf501cec677a7dac5a0a92cd2c122948074914c2865f47bfedffbf815e5ada"
+    },
+    "verification-js.json": {
+      "bytes": 426,
+      "sha256": "50404ee923437166d62f07901e8d21b734683f25544c641388c7a9c4f35f85e2"
+    },
+    "verification-optimized.json": {
+      "bytes": 3384,
+      "sha256": "ce16888851fd8b98e6f4417161acf4e3377eaa6a144b83806ded9f5f90bb8da0"
+    },
+    "verification-reference.json": {
+      "bytes": 3782,
+      "sha256": "fc77def0eae8e126a7fadc9ca3cca70350e7143e299495d0b5642b336629112e"
+    },
+    "verification-summary.json": {
+      "bytes": 1001,
+      "sha256": "ec235b86f3bdc70074b2a06bd5f934b56b99227085f287ad105be9ca4c41b5d4"
+    },
+    "verification-unit.txt": {
+      "bytes": 1790,
+      "sha256": "af701050f9504ade25afa1cddf5db312d215eef72d343380261a6579ace41922"
+    },
+    "verification-vram.json": {
+      "bytes": 533,
+      "sha256": "ebfd7b12e313855a6913c762ad8aebd85403d333aa2d0d303cc9886aa95d984d"
+    },
+    "worklet.compiler.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

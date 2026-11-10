@@ -1,0 +1,194 @@
+{
+  "romName": "杀戮战场.nes",
+  "romSHA256": "ab308f24cde8ca41974f0683d9b271a9ec3d534ed55c2ee635d3783074ce1dd0",
+  "romBundled": false,
+  "protocol": {
+    "baselineMs": 10000,
+    "jankMs": 10000,
+    "jankBusyMs": 35,
+    "jankIntervalMs": 100,
+    "volume": 1
+  },
+  "v004": {
+    "directory": "dist/v004-audioworklet",
+    "file": "D:/tools/VirtuaNES Plus 2013/roms/00_Top10/杀戮战场.nes",
+    "errors": [],
+    "sampleRate": 48000,
+    "baselineStart": {
+      "rendered": 40730,
+      "dropped": 0,
+      "underruns": 14,
+      "queued": 799,
+      "peak": 0.5338653326034546,
+      "extra": [],
+      "frames": 52,
+      "time": 3575.7000000178814
+    },
+    "baselineEnd": {
+      "rendered": 423536,
+      "dropped": 0,
+      "underruns": 99,
+      "queued": 1372,
+      "peak": 0.5338653326034546,
+      "extra": [],
+      "frames": 532,
+      "time": 13587.200000017881
+    },
+    "jankEnd": {
+      "rendered": 697267,
+      "dropped": 0,
+      "underruns": 201,
+      "queued": 799,
+      "peak": 0.5338653326034546,
+      "extra": [],
+      "frames": 874,
+      "time": 23774.20000001788
+    },
+    "baseline": {
+      "underruns": 85,
+      "dropped": 0,
+      "fps": 47.944863407081854
+    },
+    "jank": {
+      "underruns": 102,
+      "dropped": 0,
+      "fps": 33.572199862569946
+    }
+  },
+  "v005": {
+    "directory": "dist/v005-audio-stability",
+    "file": "D:/tools/VirtuaNES Plus 2013/roms/00_Top10/杀戮战场.nes",
+    "errors": [],
+    "sampleRate": 48000,
+    "baselineStart": {
+      "rendered": 57088,
+      "dropped": 0,
+      "underruns": 0,
+      "queued": 4409,
+      "peak": 0.517608642578125,
+      "extra": [
+        0,
+        1,
+        48000,
+        5,
+        3072,
+        4096
+      ],
+      "frames": 77,
+      "time": 2716.2000000178814
+    },
+    "baselineEnd": {
+      "rendered": 538112,
+      "dropped": 0,
+      "underruns": 0,
+      "queued": 4206,
+      "peak": 0.517608642578125,
+      "extra": [
+        0,
+        1,
+        48000,
+        5,
+        3072,
+        4096
+      ],
+      "frames": 679,
+      "time": 12735.200000017881
+    },
+    "jankEnd": {
+      "rendered": 1025280,
+      "dropped": 0,
+      "underruns": 0,
+      "queued": 3450,
+      "peak": 0.517608642578125,
+      "extra": [
+        0,
+        101,
+        48000,
+        5,
+        3072,
+        4096
+      ],
+      "frames": 1289,
+      "time": 22910.20000001788
+    },
+    "baseline": {
+      "underruns": 0,
+      "dropped": 0,
+      "fps": 60.08583690987125
+    },
+    "jank": {
+      "underruns": 0,
+      "dropped": 0,
+      "fps": 59.95085995085995
+    }
+  },
+  "v005Readable": {
+    "directory": "dist/v005-audio-stability",
+    "artifact": "jsnes-lite.readable.html",
+    "file": "D:/tools/VirtuaNES Plus 2013/roms/00_Top10/杀戮战场.nes",
+    "errors": [],
+    "sampleRate": 48000,
+    "diagnosticText": "Buffer 109 ms | underruns 0 | dropped 0 | clipping 0 | peak 0.52",
+    "baselineStart": {
+      "rendered": 87936,
+      "dropped": 0,
+      "underruns": 0,
+      "queued": 7107,
+      "peak": 0.517608642578125,
+      "extra": [
+        0,
+        0,
+        48000,
+        5,
+        3072,
+        4096
+      ],
+      "frames": 120,
+      "time": 2377.9000000059605
+    },
+    "baselineEnd": {
+      "rendered": 568320,
+      "dropped": 0,
+      "underruns": 0,
+      "queued": 7544,
+      "peak": 0.517608642578125,
+      "extra": [
+        0,
+        0,
+        48000,
+        5,
+        3072,
+        4096
+      ],
+      "frames": 721,
+      "time": 12383.40000000596
+    },
+    "jankEnd": {
+      "rendered": 1052672,
+      "dropped": 0,
+      "underruns": 0,
+      "queued": 4812,
+      "peak": 0.517608642578125,
+      "extra": [
+        0,
+        1,
+        48000,
+        5,
+        3072,
+        4096
+      ],
+      "frames": 1324,
+      "time": 22472.100000023842
+    },
+    "baseline": {
+      "underruns": 0,
+      "dropped": 0,
+      "fps": 60.06696317025636
+    },
+    "jank": {
+      "underruns": 0,
+      "dropped": 0,
+      "fps": 59.76984150573723
+    }
+  }
+}

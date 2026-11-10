@@ -1,0 +1,25 @@
+✔ JSNES APU import is byte-identical to the pinned source modules (2.5412ms)
+✔ APU bridge reproduces JSNES stereo PCM for pulse, triangle, noise and DMC (92.4237ms)
+✔ APU IRQ levels, status acknowledgement, DMC enable and actual sample rate (12.8916ms)
+✔ Worklet priming, stereo order, gain/mute, pause and reset discard old audio (3.1033ms)
+✔ Worklet overflow remains bounded, keeps newest samples, underrun outputs zero (11.006ms)
+✔ MMC1: serial latch, all PRG/CHR modes, mirroring and partial reset (19.0563ms)
+✔ MMC1: final write address determines register, adjacent writes ignored (9.7061ms)
+✔ MMC1: PRG-RAM enable, CHR-RAM banking and SUROM outer bank (6.7546ms)
+✔ UxROM: bank bits, wraparound, fixed bank, CHR-RAM and register aliases (10.7749ms)
+✔ CNROM: all 8 KiB CHR banks, fixed PRG and CHR-ROM write protection (7.1482ms)
+✔ MMC3: all bank registers, inverted CHR/PRG modes and odd pair alignment (6.3218ms)
+✔ MMC3: four-screen lock, mirror aliases, SRAM enable/write protect (6.497ms)
+✔ MMC3: reload/decrement, pending line, ack, disabled counting and zero latch (5.9137ms)
+✔ MMC3: CPU PPUADDR clocks, filter, scanline rendering guard and reset (5.7282ms)
+✔ IRQ integration: masked line retained, then serviced; NMI has priority (6.0923ms)
+✔ Loader validation, trainer skip, SRAM isolation and mapper reset isolation (7.0673ms)
+✔ Differential bank switching against pinned latest JSNES (1,2,3,4) (78.0962ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 435.3145

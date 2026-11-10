@@ -1,0 +1,49 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {Packer} from '../tools/roadroller-2.1.0/package/index.mjs';
+process.chdir(path.resolve(import.meta.dirname,'..'));
+const out='../dist/v004-audioworklet';
+if(fs.existsSync(out+'/RELEASED.json'))throw Error('Version already finalized');
+const hash=data=>crypto.createHash('sha256').update(data).digest('hex');
+const header=fs.readFileSync('../interfaces/ui.html','utf8').trim();
+const options=JSON.parse(fs.readFileSync(out+'/roadroller.parameters.json','utf8')).options;
+delete options.resourcePool;
+const packer=new Packer([{data:'document.body.innerHTML='+JSON.stringify(header.replace(/^<!doctype html>/,''))+';\n'+fs.readFileSync(out+'/closure.min.js','utf8'),type:'js',action:'eval'}],options);
+const {firstLine,secondLine}=packer.makeDecoder();
+const rebuilt=Buffer.from('<!doctype html><meta charset=utf-8><body><script>'+(firstLine+'\n'+secondLine).replace(/<\/script/gi,'<\\/script')+'</script>');
+const oldVersions={};
+for(const dir of ['../dist/v001-terser','../dist/v002-closure-roadroller','../dist/v003-mappers-1-4']){
+ const manifest=JSON.parse(fs.readFileSync(dir+'/RELEASED.json','utf8'));
+ oldVersions[dir]=Object.entries(manifest.files).every(([n,info])=>hash(fs.readFileSync(dir+'/'+n))===info.sha256);
+}
+const reference=JSON.parse(fs.readFileSync(out+'/verification-reference.json','utf8'))[0];
+const previous=JSON.parse(fs.readFileSync('../dist/v003-mappers-1-4/verification-reference.json','utf8'))[0];
+const optimized=JSON.parse(fs.readFileSync(out+'/verification-optimized.json','utf8'));
+const audio=JSON.parse(fs.readFileSync(out+'/verification-audio-browser.json','utf8'));
+const ui=JSON.parse(fs.readFileSync(out+'/verification-js.json','utf8'));
+const unit=fs.readFileSync(out+'/verification-unit.txt','utf8');
+const summary={
+ byteExactRoadrollerReproduction:rebuilt.equals(fs.readFileSync(out+'/jsnes-lite.min.html')),
+ oldVersionsUnchanged:oldVersions,
+ unitGroupsPassed:Number(/pass\s+(\d+)/.exec(unit)?.[1]),unitFailures:Number(/fail\s+(\d+)/.exec(unit)?.[1]),
+ cpuSmokeROMSPassed:reference.roms.slice(0,4).filter(r=>r.ramStatus===66).length,
+ canvasHashesMatchV003:reference.roms.every((r,i)=>r.hash===previous.roms[i].hash),
+ optimizedCanvasHashesMatchReference:optimized.every(r=>r.roms.every((item,i)=>item.hash===reference.roms[i].hash)),
+ verifiedOptimizedArtifactsMatchCurrentFiles:optimized.every(r=>r.artifactSHA256===hash(fs.readFileSync(out+'/'+r.file))),
+ audioWorkletBrowserVersionsPassed:audio.filter(r=>r.initialWorkletStats[2]>0&&r.initialWorkletStats[6]>.001&&r.threaded.advanced>=512&&r.mutedPeak===0&&r.pausedPeak===0&&r.contexts===1&&r.nodes===1&&r.secure&&r.state==='running'&&r.measuredFPS>=55&&r.measuredFPS<=65&&r.errors.length===0&&r.http.length===0&&r.processorErrors.length===0).map(r=>r.file),
+ standaloneJSPassed:ui.every(r=>r.invalidROMHandled&&r.autoStart&&r.pausedCorrectly&&r.resetAndStep&&r.errors.length===0&&r.hash===1863927830),
+ knownFailures:reference.roms.filter(r=>r.name==='4-scanline_timing').map(r=>({name:r.name,status:r.ramStatus,message:r.message})),
+ scriptErrors:optimized.flatMap(r=>r.errors),networkRequests:optimized.flatMap(r=>r.requests)
+};
+fs.writeFileSync(out+'/verification-summary.json',JSON.stringify(summary,null,2)+'\n');
+if(!summary.byteExactRoadrollerReproduction||Object.values(oldVersions).includes(false)||summary.unitGroupsPassed!==17||summary.unitFailures!==0||summary.cpuSmokeROMSPassed!==4||!summary.canvasHashesMatchV003||!summary.optimizedCanvasHashesMatchReference||!summary.verifiedOptimizedArtifactsMatchCurrentFiles||summary.audioWorkletBrowserVersionsPassed.length!==3||!summary.standaloneJSPassed||summary.scriptErrors.length||summary.networkRequests.length)throw Error('Release verification failed');
+console.log(JSON.stringify(summary,null,2));
+if(process.argv.includes('--finalize')){
+ const files={};
+ for(const name of fs.readdirSync(out,{recursive:true}).sort()){
+  const p=out+'/'+name;if(fs.statSync(p).isFile())files[name.replaceAll('\\','/')]={bytes:fs.statSync(p).size,sha256:hash(fs.readFileSync(p))};
+ }
+ fs.writeFileSync(out+'/RELEASED.json',JSON.stringify({version:'v004',date:'2026-11-10',status:'finalized-do-not-overwrite',files},null,2)+'\n');
+ console.log('Finalized v004.');
+}

@@ -1,0 +1,42 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {Packer} from '../tools/roadroller-2.1.0/package/index.mjs';
+process.chdir(path.resolve(import.meta.dirname,'..'));
+const out='../dist/v003-mappers-1-4';
+const hash=data=>crypto.createHash('sha256').update(data).digest('hex');
+const header=fs.readFileSync('../interfaces/ui.html','utf8').trim();
+const options=JSON.parse(fs.readFileSync(out+'/roadroller.parameters.json','utf8')).options;
+delete options.resourcePool;
+const packer=new Packer([{data:'document.body.innerHTML='+JSON.stringify(header.replace(/^<!doctype html>/,''))+';\n'+fs.readFileSync(out+'/closure.min.js','utf8'),type:'js',action:'eval'}],options);
+const {firstLine,secondLine}=packer.makeDecoder();
+const rebuilt=Buffer.from('<!doctype html><meta charset=utf-8><body><script>'+(firstLine+'\n'+secondLine).replace(/<\/script/gi,'<\\/script')+'</script>');
+const oldVersions={};
+for(const dir of ['../dist/v001-terser','../dist/v002-closure-roadroller']){
+ const manifest=JSON.parse(fs.readFileSync(dir+'/RELEASED.json','utf8'));
+ oldVersions[dir]=Object.entries(manifest.files).every(([n,info])=>hash(fs.readFileSync(dir+'/'+n))===info.sha256);
+}
+const reference=JSON.parse(fs.readFileSync(out+'/verification-reference.json','utf8'))[0];
+const optimized=JSON.parse(fs.readFileSync(out+'/verification-optimized.json','utf8'));
+const summary={
+ byteExactRoadrollerReproduction:rebuilt.equals(fs.readFileSync(out+'/jsnes-lite.min.html')),
+ oldVersionsUnchanged:oldVersions,
+ mapperUnitGroupsPassed:12,
+ cpuSmokeROMSPassed:reference.roms.slice(0,4).filter(r=>r.ramStatus===66).length,
+ mmc3PublicTestsPassed:reference.roms.filter(r=>['1-clocking','2-details','3-A12_clocking','5-MMC3'].includes(r.name)&&r.ramStatus===0).map(r=>r.name),
+ knownFailures:reference.roms.filter(r=>r.name==='4-scanline_timing').map(r=>({name:r.name,status:r.ramStatus,message:r.message})),
+ optimizedCanvasHashesMatchReference:optimized.every(r=>r.roms.every((item,i)=>item.hash===reference.roms[i].hash)),
+ scriptErrors:optimized.flatMap(r=>r.errors),networkRequests:optimized.flatMap(r=>r.requests)
+};
+fs.writeFileSync(out+'/verification-summary.json',JSON.stringify(summary,null,2)+'\n');
+if(!summary.byteExactRoadrollerReproduction||Object.values(oldVersions).includes(false)||summary.cpuSmokeROMSPassed!==4||summary.mmc3PublicTestsPassed.length!==4||!summary.optimizedCanvasHashesMatchReference||summary.scriptErrors.length||summary.networkRequests.length)throw Error('Release verification failed');
+console.log(JSON.stringify(summary,null,2));
+if(process.argv.includes('--finalize')){
+ if(fs.existsSync(out+'/RELEASED.json'))throw Error('Already finalized');
+ const files={};
+ for(const name of fs.readdirSync(out,{recursive:true}).sort()){
+  const p=out+'/'+name;if(fs.statSync(p).isFile())files[name.replaceAll('\\','/')]={bytes:fs.statSync(p).size,sha256:hash(fs.readFileSync(p))};
+ }
+ fs.writeFileSync(out+'/RELEASED.json',JSON.stringify({version:'v003',date:'2026-11-10',status:'finalized-do-not-overwrite',files},null,2)+'\n');
+ console.log('Finalized v003.');
+}
