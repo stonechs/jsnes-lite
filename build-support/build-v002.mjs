@@ -94,6 +94,6 @@ if(candidates.length){
  fs.copyFileSync(`${out}/${winner.replace(/\.html$/,'.js')}`,`${out}/jsnes-lite.min.js`);
  for(const name of ['jsnes-lite.min.html','jsnes-lite.readable.html','jsnes-lite.readable.js','jsnes-lite.min.js'])files[name]=describe(fs.readFileSync(`${out}/${name}`));
  fs.writeFileSync(`${out}/jsnes-lite.min.html.gz`,zlib.gzipSync(fs.readFileSync(`${out}/jsnes-lite.min.html`),{level:9}));
- fs.writeFileSync(`${out}/sizes.json`,JSON.stringify({upstreamCommit:cp.execFileSync('git',['-C','upstream','rev-parse','HEAD'],{encoding:'utf8'}).trim(),closure:'20261108.0.0',roadroller:'2.1.0',roadrollerLevel:2,romIncluded:false,winner,files},null,2)+'\n');
+ fs.writeFileSync(`${out}/sizes.json`,JSON.stringify({upstreamCommit:'923d45e04483b7655dbdd91773f74de46c38c661',closure:'20261108.0.0',roadroller:'2.1.0',roadrollerLevel:2,romIncluded:false,winner,files},null,2)+'\n');
  console.log('Smallest HTML:',winner,files[winner]);
 }

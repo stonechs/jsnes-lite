@@ -7,13 +7,13 @@ import {lite,load,makeROM} from './helpers.mjs';
 
 test('JSNES APU import is byte-identical to the pinned source modules',()=>{
  for(const name of ['index','channel-square','channel-triangle','channel-noise','channel-dm']){
-  assert.ok(fs.readFileSync('src/jsnes-apu/'+name+'.js').equals(fs.readFileSync('references/jsnes/src/papu/'+name+'.js')));
+  assert.ok(fs.readFileSync('../src/jsnes-apu/'+name+'.js').equals(fs.readFileSync('references/jsnes/src/papu/'+name+'.js')));
  }
 });
 test('APU bridge reproduces JSNES stereo PCM for pulse, triangle, noise and DMC',()=>{
  const c=lite();load(c,makeROM(0,2,0));c.apu_reset=vm.runInContext('apu_reset',c);
  // helpers normally stub reset for mapper-only tests; reconstruct the bridge.
- vm.runInContext(fs.readFileSync('src/papu.js','utf8'),c);c.apu_reset();
+ vm.runInContext(fs.readFileSync('../src/papu.js','utf8'),c);c.apu_reset();
  const actual=[],expected=[];c.apu_host.opts.onAudioSample=(l,r)=>actual.push([l,r]);
  const host={opts:{sampleRate:44100,onAudioSample:(l,r)=>expected.push([l,r])},cpu:{IRQ_NORMAL:0,dataBus:0,instrBusCycles:0,apuCatchupCycles:0,requestIrq(){},haltCycles(){}},mmap:{load:a=>c.memory_read(a)}};
  const reference=new ReferenceAPU(host);
@@ -25,7 +25,7 @@ test('APU bridge reproduces JSNES stereo PCM for pulse, triangle, noise and DMC'
  assert.ok(c.apu_stalls>0,'DMC must request CPU stalls');
 });
 test('APU IRQ levels, status acknowledgement, DMC enable and actual sample rate',()=>{
- const c=lite();load(c,makeROM(0,2,0));vm.runInContext(fs.readFileSync('src/papu.js','utf8'),c);c.apu_reset();
+ const c=lite();load(c,makeROM(0,2,0));vm.runInContext(fs.readFileSync('../src/papu.js','utf8'),c);c.apu_reset();
  c.apu_device.frameIrqActive=true;c.apu_device.frameIrqEnabled=true;assert.ok(c.apu_irq_pending());
  c.c=0;assert.equal(c.apu_read()&64,64);c.apu_clock(2);assert.equal(c.apu_irq_pending(),false);
  c.apu_write(0x4010,0x8f);c.apu_write(0x4012,0);c.apu_write(0x4013,0);c.apu_write(0x4015,16);
@@ -38,7 +38,7 @@ function processor(){
  let Klass;const replies=[];
  class AudioWorkletProcessor{constructor(){this.port={postMessage:value=>replies.push(value)}}}
  const context=vm.createContext({AudioWorkletProcessor,registerProcessor:(name,value)=>{assert.equal(name,'lite-nes-audio');Klass=value},Float32Array,sampleRate:48000});
- vm.runInContext(fs.readFileSync('src/audio-worklet.js','utf8'),context);
+ vm.runInContext(fs.readFileSync('../src/audio-worklet.js','utf8'),context);
  const instance=new Klass();const message=data=>instance.port.onmessage({data});
  const render=()=>{const output=[new Float32Array(128),new Float32Array(128)];assert.equal(instance.process([],[output]),true);return output};
  return{instance,message,render,replies};

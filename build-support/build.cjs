@@ -36,7 +36,7 @@ const wrap = js => header + '\n<script>\n' + js.replace(/<\/script/gi, '<\\/scri
   fs.writeFileSync(outputDir+'/jsnes-lite.min.js',min.code);
   fs.writeFileSync(outputDir+'/jsnes-lite-standalone.html',wrap(core+'\n;\n'+ui));
   fs.writeFileSync(outputDir+'/jsnes-lite-standalone.min.html',wrap(min.code));
-  const report={commit:cp.execFileSync('git',['-C','upstream','rev-parse','HEAD'],{encoding:'utf8'}).trim(),terser:'5.51.2',romIncluded:false,sourceBytes:files.reduce((n,f)=>n+fs.statSync(path.join('upstream',f)).size,0),files:{}};
+  const report={commit:'923d45e04483b7655dbdd91773f74de46c38c661',terser:'5.51.2',romIncluded:false,sourceBytes:files.reduce((n,f)=>n+fs.statSync(path.join('upstream',f)).size,0),files:{}};
   for(const f of fs.readdirSync(outputDir).filter(f=>f.endsWith('.html'))){
     const data=fs.readFileSync(outputDir+'/'+f),gz=zlib.gzipSync(data,{level:9});
     fs.writeFileSync(outputDir+'/'+f+'.gz',gz);

@@ -109,7 +109,7 @@ memory_read = address => {
     
     // $4015: Sound channel enable, DMC Status
     if(address == 0x4015){
-      return get_4015();
+      return apu_read();
     }
 
     // $4016: Joystick 1 + Strobe
@@ -120,12 +120,8 @@ memory_read = address => {
   }
   
   // PRG-ROM
-  else if(address >= 0x8000 && address < 0xC000){
-    return NES.prg[NES.prg_0_bank][address - 0x8000];
-  }
-  else if(address >= 0xC000){
-    return NES.prg[NES.prg_1_bank][address - 0xC000];
-  }
+  else if(address >= 0x8000) return mapper_prg_read(address);
+  else if(address >= 0x6000) return mapper_ram_enabled ? mapper_ram[address - 0x6000] : 0;
   
   // Simply read in memory
   return cpu_mem[address] || 0;
@@ -167,36 +163,9 @@ memory_write = (address, value) => {
     else if(address == 0x2007) set_PPUDATA(value);
   }
   
-  // APU registers ($4000-$4013)
-  else if(address < 0x4014) {
-    //APU.storeRegister(address, value);
-    //APU.writeReg(address, value);
+  // APU registers, including all five channels and DMC DMA.
+  else if(address < 0x4014) apu_write(address, value);
 
-    if(address == 0x4000) set_4000(value);
-    if(address == 0x4001) set_4001(value);
-    if(address == 0x4002) set_4002(value);
-    if(address == 0x4003) set_4003(value);
-    
-    if(address == 0x4004) set_4004(value);
-    if(address == 0x4005) set_4005(value);
-    if(address == 0x4006) set_4006(value);
-    if(address == 0x4007) set_4007(value);
-    
-    if(address == 0x4008) set_4008(value);
-    if(address == 0x400a) set_400a(value);
-    if(address == 0x400b) set_400b(value);
-    
-    if(address == 0x400c) set_400c(value);
-    if(address == 0x400e) set_400e(value);
-    if(address == 0x400f) set_400f(value);
-    
-    /*
-    if(address == 0x4010) set_4010(value);
-    if(address == 0x4011) set_4011(value);
-    if(address == 0x4012) set_4012(value);
-    if(address == 0x4013) set_4013(value);*/
-  }
-  
   // I/O registers ($4014-$401F)
   else if(address < 0x4020){
     
@@ -205,7 +174,7 @@ memory_write = (address, value) => {
 
     // $4015: Sound Channel Switch, DMC Status
     else if(address == 0x4015) {
-      set_4015(value);
+      apu_write(0x4015, value);
     }
 
     // $4016: Joystick 1 + Strobe
@@ -219,12 +188,15 @@ memory_write = (address, value) => {
 
     // $4017: Sound channel frame sequencer:
     else if(address == 0x4017){
-      set_4017(value);
+      apu_write(0x4017, value);
     }
   }
 
   // Write to persistent RAM (save slot)
-  else if(address >= 0x6000 && address < 0x8000) NES.onBatteryRamWrite(address, value);
+  else if(address >= 0x6000 && address < 0x8000) {
+    if(mapper_ram_enabled && !mapper_ram_protect) mapper_ram[address - 0x6000] = value;
+    return;
+  }
   
   // Simply write in memory, if not in PRG-ROM (necessary?)
   if(address < 0x8000){

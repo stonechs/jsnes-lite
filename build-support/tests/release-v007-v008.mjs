@@ -19,8 +19,8 @@ for(const out of ['../dist/v007-no-debug','../dist/v008-r14-ui']){
   playerAudioPassed:player.length===2&&player.every(r=>r.peak>.01&&r.mutePeak===0&&r.threaded.elapsed>.02&&r.threaded.peak>.01&&r.contexts===1&&r.nodes===1&&r.errors.length===0&&r.http.length===0&&r.processorErrors.length===0),
   sizeHashesValid:Object.entries(sizes.files).every(([n,i])=>fs.statSync(out+'/'+n).size===i.bytes&&hash(fs.readFileSync(out+'/'+n))===i.sha256),
   diagnosticsRemoved:!/(?:audioDebug|p_debug|debugVRAM|audioMetrics|audio_show_stats|vramCanvas|NES\.vramBuffer)/.test(fs.readFileSync(out+'/jsnes-lite.readable.html','utf8')),
-  sourceAPUUnchanged:hash(fs.readFileSync('src/apu-jsnes.js'))===hash(fs.readFileSync('../dist/v005-audio-stability/source/apu-jsnes.js')),
-  sourceCPUUnchanged:hash(fs.readFileSync('src/6502.js'))===hash(fs.readFileSync('../dist/v005-audio-stability/source/6502.js')),
+  sourceAPUUnchanged:hash(fs.readFileSync('../src/apu-jsnes.js'))===hash(fs.readFileSync('../dist/v005-audio-stability/source/apu-jsnes.js')),
+  sourceCPUUnchanged:hash(fs.readFileSync('../src/6502.js'))===hash(fs.readFileSync('../dist/v005-audio-stability/source/6502.js')),
   referencePlayerUnchanged:hash(fs.readFileSync('D:/2026work/jsnes/jsnes-2.1.0-r14/nes-readable.html'))===JSON.parse(fs.readFileSync(out+'/reference.json','utf8')).sha256,
   finalHTMLBytes:fs.statSync(out+'/jsnes-lite.min.html').size,
   knownLimitations:['Original mapper 30 incomplete; MMC3 precise scanline timing test still fails.']};

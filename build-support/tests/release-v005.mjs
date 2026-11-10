@@ -25,10 +25,10 @@ const ui=JSON.parse(fs.readFileSync(out+'/verification-js.json','utf8'));
 const unit=fs.readFileSync(out+'/verification-unit.txt','utf8');
 const field=JSON.parse(fs.readFileSync(out+'/verification-field-combat.json','utf8'));
 const stable=r=>r.errors.length===0&&r.baseline.underruns===0&&r.baseline.dropped===0&&r.jank.underruns===0&&r.jank.dropped===0&&r.jankEnd.extra[0]===0&&r.baseline.fps>=55&&r.baseline.fps<=65&&r.jank.fps>=55&&r.jank.fps<=65;
-const apuUnchanged=['index','channel-dm','channel-noise','channel-square','channel-triangle','utils'].every(n=>hash(fs.readFileSync('src/jsnes-apu/'+n+'.js'))===hash(fs.readFileSync('../dist/v004-audioworklet/source/jsnes-apu/'+n+'.js')));
+const apuUnchanged=['index','channel-dm','channel-noise','channel-square','channel-triangle','utils'].every(n=>hash(fs.readFileSync('../src/jsnes-apu/'+n+'.js'))===hash(fs.readFileSync('../dist/v004-audioworklet/source/jsnes-apu/'+n+'.js')));
 const summary={
  APUCoreUnchangedSinceV004:apuUnchanged,
- APUBridgeUnchangedSinceV004:hash(fs.readFileSync('src/papu.js'))===hash(fs.readFileSync('../dist/v004-audioworklet/source/papu.js')),
+ APUBridgeUnchangedSinceV004:hash(fs.readFileSync('../src/papu.js'))===hash(fs.readFileSync('../dist/v004-audioworklet/source/papu.js')),
  fieldCombatMinimizedAndReadableStable:stable(field.v005)&&stable(field.v005Readable),
  vramOptimizationPreservesImage:JSON.parse(fs.readFileSync(out+'/verification-vram.json','utf8')).every((r,i,a)=>r.errors.length===0&&r.vramNonzero===r.open&&r.frame===a[0].frame),
  byteExactRoadrollerReproduction:rebuilt.equals(fs.readFileSync(out+'/jsnes-lite.min.html')),

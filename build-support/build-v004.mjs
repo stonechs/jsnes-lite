@@ -14,22 +14,22 @@ fs.mkdirSync(out,{recursive:true});
 if(mode==='compile')cp.execFileSync(process.execPath,['prepare-apu.mjs'],{stdio:'inherit'});
 const header=fs.readFileSync('../interfaces/ui.html','utf8').trim();
 const order=['nes','rom','cpu','memory','mappers','controller','6502','apu-jsnes','audio-output','papu','ppu'];
-const workletRaw=fs.readFileSync('src/audio-worklet.js','utf8');
+const workletRaw=fs.readFileSync('../src/audio-worklet.js','utf8');
 const workletMinPath=out+'/audio-worklet.min.js';
 if(mode==='compile'){
- const result=cp.spawnSync(path.resolve('tools/closure-20261108.0.0/package/compiler.exe'),['--compilation_level','SIMPLE','--language_in','ECMASCRIPT_NEXT','--language_out','ECMASCRIPT_2020','--emit_use_strict=false','--rewrite_polyfills=false','--warning_level','QUIET','--js','src/audio-worklet.js','--js_output_file',workletMinPath],{encoding:'utf8'});
+ const result=cp.spawnSync(path.resolve('tools/closure-20261108.0.0/package/compiler.exe'),['--compilation_level','SIMPLE','--language_in','ECMASCRIPT_NEXT','--language_out','ECMASCRIPT_2020','--emit_use_strict=false','--rewrite_polyfills=false','--warning_level','QUIET','--js','../src/audio-worklet.js','--js_output_file',workletMinPath],{encoding:'utf8'});
  fs.writeFileSync(out+'/worklet.compiler.log',(result.stdout||'')+(result.stderr||''));
  if(result.status!==0)throw Error('Worklet compile failed: '+result.stderr);
  fs.writeFileSync(out+'/audio-worklet.readable.js',workletRaw);
 }
-const core=order.map(n=>fs.readFileSync(`src/${n}.js`,'utf8')).join('\n;\n')+'\n;\n'+fs.readFileSync('../interfaces/ui.js','utf8');
+const core=order.map(n=>fs.readFileSync(`../src/${n}.js`,'utf8')).join('\n;\n')+'\n;\n'+fs.readFileSync('../interfaces/ui.js','utf8');
 const runtime='var audio_worklet_source='+JSON.stringify(fs.readFileSync(workletMinPath,'utf8'))+';\n'+core;
 const readableWorklet='var audio_worklet_source=String.raw`'+workletRaw+'`;\n';
 const wrap=code=>header+'\n<script>\n'+code.replace(/<\/script/gi,'<\\/script')+'\n</script>\n';
 const setup='document.body.innerHTML='+JSON.stringify(header.replace(/^<!doctype html>/,''))+';\n';
 if(mode==='compile'){
  const sandbox=vm.createContext({});
- vm.runInContext(fs.readFileSync('src/6502.js','utf8'),sandbox);
+ vm.runInContext(fs.readFileSync('../src/6502.js','utf8'),sandbox);
  const tokens=new Set(sandbox.O.flatMap(f=>f.toString().match(/[A-Za-z_$][\w$]*/g)||[]));
  const names=Object.keys(sandbox).filter(n=>tokens.has(n));
  fs.writeFileSync(out+'/closure.externs.js','/** @externs */\nvar '+names.join(',')+';\n');
@@ -66,5 +66,5 @@ for(const name of fs.readdirSync(out).filter(n=>/\.(js|html)$/.test(n))){
  files[name]={bytes:data.length,KiB:data.length/1024,gzipBytes:gz.length,sha256:crypto.createHash('sha256').update(data).digest('hex')};
  if(name==='jsnes-lite.min.html')fs.writeFileSync(out+'/'+name+'.gz',gz);
 }
-fs.writeFileSync(out+'/sizes.json',JSON.stringify({version,jsnesLiteCommit:cp.execFileSync('git',['-C','upstream','rev-parse','HEAD'],{encoding:'utf8'}).trim(),jsnesReferenceCommit:cp.execFileSync('git',['-C','references/jsnes','rev-parse','HEAD'],{encoding:'utf8'}).trim(),closure:'20261108.0.0',roadroller:'2.1.0',roadrollerLevel:2,romIncluded:false,files},null,2)+'\n');
+fs.writeFileSync(out+'/sizes.json',JSON.stringify({version,jsnesLiteCommit:'923d45e04483b7655dbdd91773f74de46c38c661',jsnesReferenceCommit:'b8a45d088e922b6abcd87c4eb1b7237919e9d3d2',closure:'20261108.0.0',roadroller:'2.1.0',roadrollerLevel:2,romIncluded:false,files},null,2)+'\n');
 console.log(JSON.stringify(files,null,2));

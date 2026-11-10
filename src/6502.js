@@ -24,8 +24,8 @@ c = 0,       // cycle counter
 
 // Read/write a byte in memory. Costs 1 cycle
 // These functions handle mirrors, persistent save slots, and Mapper-specific features like bank switches
-r = v => (c++, memory_read(v)),
-w = (v, w) => (c++, memory_write(v, w)),
+r = v => (c++, cpu_bus_read(v)),
+w = (v, w) => (c++, apu_bus=w, memory_write(v, w)),
 
 // Update N and Z status flags:
 // - The value v is clamped on 8 bits and returned

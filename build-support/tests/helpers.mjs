@@ -11,7 +11,7 @@ export function makeROM(mapper,prg16=8,chr8=8,{fourScreen=false,vertical=false}=
 export function lite(){
   const context=vm.createContext({console,Uint8Array,Uint32Array,ArrayBuffer,clearInterval,setInterval,clearTimeout,setTimeout,performance});
   context.window=context;
-  for(const name of order)vm.runInContext(fs.readFileSync(new URL('../src/'+name+'.js',import.meta.url),'utf8'),context,{filename:name+'.js'});
+  for(const name of order)vm.runInContext(fs.readFileSync(new URL('../../src/'+name+'.js',import.meta.url),'utf8'),context,{filename:name+'.js'});
   context.apu_reset=()=>{};
   return context;
 }

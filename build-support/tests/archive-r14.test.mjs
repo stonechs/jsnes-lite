@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const context=vm.createContext({TextDecoder,Blob,DecompressionStream,Uint8Array,Uint32Array,DataView});
-vm.runInContext(fs.readFileSync('src/archive-r14.js','utf8'),context);
+vm.runInContext(fs.readFileSync('../src/archive-r14.js','utf8'),context);
 for(const name of ['stored.zip','deflate.zip','stored.7z','lzma.7z','lzma2.7z'])test('r14 archive reader: '+name,async()=>{
  const data=fs.readFileSync('tests/archives/'+name);
  const result=await context.readGameFile({name,arrayBuffer:async()=>data.buffer.slice(data.byteOffset,data.byteOffset+data.length)});

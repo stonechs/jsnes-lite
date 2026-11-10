@@ -23,12 +23,13 @@ cpu_reset = () => {
     
   // CPU internal memory (64KB)
   cpu_mem = [];
+  clk = 0;
 },
 
 // Clock 1 CPU cycle
 // During this time, 3 PPU cycles and 1 APU cycle take place
 cpu_tick = () => {
-  //console.log(clk++);
+  clk++;
   ppu_tick();
   ppu_tick();
   ppu_tick();
@@ -51,6 +52,10 @@ emulate = () => {
   }
 
   // Or execute next instruction
+  else if((mapper_irq || apu_irq_pending()) && !I) {
+    // Cartridge IRQ is level-sensitive; polling must not discard a masked IRQ.
+    op(3);
+  }
   else {
     op();
   }
