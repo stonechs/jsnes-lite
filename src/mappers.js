@@ -73,7 +73,7 @@ var mapper_clock_irq=()=>{
   mmc3_reload=0;
   if(mmc3_counter===0&&mmc3_enabled)mapper_irq=1;
 };
-// Observe CPU-driven PPUADDR/PPUDATA edges, NOT debug renderer CHR reads.
+// Observe CPU-driven PPUADDR/PPUDATA edges, not background renderer CHR reads.
 // A12 must remain low for >=8 PPU clocks before a rising edge qualifies.
 var mapper_ppu_address=address=>{
   if(NES.mapper!==4)return;
@@ -103,7 +103,7 @@ var mapper_reset=()=>{
   }
 };
 NES.load=()=>{
-  if(![0,1,2,3,4,30].includes(NES.mapper))throw new Error('Unsupported mapper: '+NES.mapper);
+  if(![0,1,2,3,4].includes(NES.mapper))throw new Error('Map'+NES.mapper);
   mapper_ram=new Uint8Array(8192);
   mapper_reset();
 };
@@ -140,9 +140,5 @@ var mapper_write=(address,value)=>{
       case 0xe000:mmc3_enabled=mapper_irq=0;break;
       case 0xe001:mmc3_enabled=1;break;
     }
-  }else if(NES.mapper===30&&address>=0xc000){
-    mapper_map_prg(0,(value&31)*2,2);
-    mapper_map_chr(0,((value>>5)&3)*8,8);
-    NES.mirroring=(value&128)?3:NES.headerMirroring;
   }
 };

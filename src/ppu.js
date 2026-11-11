@@ -455,9 +455,9 @@ set_OAMDMA = value => {
 //           bits 4-5   bits 6-7
 //
 //
-// Generate one background scanline for game rendering and sprite priority
+// Generate one background line and sprite-priority pixels
 // The line number (y) is a value vetween 0 and 480
-drawVramScanline = y => {
+drawBackgroundLine = y => {
   
   
   var i, j, X, Y, nametable, bits, pixel, tileLow, tileHigh, tileColors;
@@ -561,7 +561,7 @@ drawVramScanline = y => {
 
 // Screen:
 // Backround rendering and sprite rendering can be enabled or disabled using bits b and s of PPUMASK
-// Background pixels are stored in a buffer using drawVramScanline()
+// Background pixels are stored in a buffer using drawBackgroundLine()
 // Up to 64 sprites can be drawn on screen, either on the foreground or behind the background tiles
 // Sprites are drawn from front to back (sprite 0 to sprite 63) and can overlap
 // A background sprite can overlap a foreground sprite, in that case it behaves like a clipping mask (ex: SMB's mushroom coming out of a question block)
@@ -618,7 +618,7 @@ drawScanline = y => {
     
     // Draw background tiles if background rendering is enabled
     // Use universal background color if no background tile is present
-    // Apply X/Y scrolling when fetching game background pixels.
+    // X and Y scrolling are applied when fetching the pixels values inside the background pixel buffer
     if(PPUMASK_b){
       NES.frameBuffer32[y * 256 + x] = vramPixelBuffer[(x + scroll_x) % 512] || systemPalette[ppu_read(mirrorAddress(0x3F00))];
     }
@@ -717,7 +717,7 @@ ppu_tick = () => {
     
     // Visible scanlines (0-239)
     if(scanline < 240){
-      drawVramScanline((scanline + scroll_y) % 480);
+      drawBackgroundLine((scanline + scroll_y) % 480);
       drawScanline(scanline);
       
       // Update scroll

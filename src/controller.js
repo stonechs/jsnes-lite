@@ -40,7 +40,7 @@ joy1Read = function(){
     case 5:
     case 6:
     case 7:
-      ret = NES.controllers[1].state[joy1StrobeState];
+      ret = NES.controller.state[joy1StrobeState];
       break;
     case 8:
     case 9:
@@ -70,44 +70,9 @@ joy1Read = function(){
   return ret;
 },
 
+// Unconnected second port: keep the existing idle serial response only.
 joy2Read = function(){
-  var ret;
-
-  switch (joy2StrobeState){
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-    case 6:
-    case 7:
-      ret = NES.controllers[2].state[joy2StrobeState];
-      break;
-    case 8:
-    case 9:
-    case 10:
-    case 11:
-    case 12:
-    case 13:
-    case 14:
-    case 15:
-    case 16:
-    case 17:
-    case 18:
-      ret = 0;
-      break;
-    case 19:
-      ret = 1;
-      break;
-    default:
-      ret = 0;
-  }
-
-  joy2StrobeState++;
-  if(joy2StrobeState === 24){
-    joy2StrobeState = 0;
-  }
-
-  return ret;
+  var index = joy2StrobeState;
+  joy2StrobeState = (index + 1) % 24;
+  return index < 8 ? 0x40 : index === 19 ? 1 : 0;
 }

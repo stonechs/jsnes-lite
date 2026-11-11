@@ -3,3 +3,7 @@
 
 # V010 release bytes and manifests are immutable; do not normalize line endings.
 dist/V010_极致运行版/** -text
+
+# Keep the synchronized latest source bytes unchanged.
+src/** -text
+interfaces/** -text

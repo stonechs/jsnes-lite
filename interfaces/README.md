@@ -1,3 +1,3 @@
-# 界面源码
+# V010 Web interface source
 
-r14-nes.html / r14-nes.js 为当前 v009 的界面；r14-controls.js 为共用按键与屏幕控制。clean 与 r14 保留历史界面，ui.html / ui.js 保留早期界面。模拟器核心在 ../src/。
+`ui.html` and `ui.js` are the current readable Web interface source, mirrored from the V010 release source. The Node-based V010 build pipeline reads the matching build inputs under `dist/V010_极致运行版/source/`, assembles and optimizes the application; the browser runs the resulting HTML.

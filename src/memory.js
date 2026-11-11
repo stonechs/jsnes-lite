@@ -109,7 +109,7 @@ memory_read = address => {
     
     // $4015: Sound channel enable, DMC Status
     if(address == 0x4015){
-      return apu_read();
+      return get_4015();
     }
 
     // $4016: Joystick 1 + Strobe
@@ -163,9 +163,8 @@ memory_write = (address, value) => {
     else if(address == 0x2007) set_PPUDATA(value);
   }
   
-  // APU registers, including all five channels and DMC DMA.
-  else if(address < 0x4014) apu_write(address, value);
-
+  // Compact APU register dispatch.
+  else if(address < 0x4010) apu_write(address,value);
   // I/O registers ($4014-$401F)
   else if(address < 0x4020){
     
@@ -174,7 +173,7 @@ memory_write = (address, value) => {
 
     // $4015: Sound Channel Switch, DMC Status
     else if(address == 0x4015) {
-      apu_write(0x4015, value);
+      set_4015(value);
     }
 
     // $4016: Joystick 1 + Strobe
@@ -188,7 +187,7 @@ memory_write = (address, value) => {
 
     // $4017: Sound channel frame sequencer:
     else if(address == 0x4017){
-      apu_write(0x4017, value);
+      set_4017(value);
     }
   }
 

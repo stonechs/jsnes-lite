@@ -5,8 +5,8 @@
 // - NES.start({rom, save, frame, audio})
 // - NES.reset()
 // - NES.frame()
-// - NES.buttonDown(controller, button)
-// - NES.buttonUp(controller, button)
+// - NES.keydown(button)
+// - NES.keyup(button)
 var NES = {
   
   // Emulator globals
@@ -36,8 +36,8 @@ var NES = {
   sampleRate: 44100,
   cyclesToHalt: 0,
   
-  // Controllers globals
-  controllers: null,
+  // Single controller
+  controller: null,
   
   // Mapper globals
   prg_0_bank: 0,
@@ -45,7 +45,7 @@ var NES = {
   chr_bank: 0,
   mirroring_backup: 0,
   
-  // Init the emulator with the rom (binary string), optional save file, and the display canvas
+  // Init the emulator with the rom (binary string), optional save file, and the game canvas
   init: ({rom, save, frame}) => {
 
     // Reset emulator
@@ -63,25 +63,21 @@ var NES = {
     NES.frameBuffer = new ArrayBuffer(256 * 240 * 4);
     NES.frameBuffer8 = new Uint8Array(NES.frameBuffer);
     NES.frameBuffer32 = new Uint32Array(NES.frameBuffer);
-// Init controllers
-    NES.controllers = {
-      1: new Controller(),
-      2: new Controller()
-    };
+// Init the only controller
+    NES.controller = new Controller();
     
   },
   
   // Play
   play: () => {
     NES.pause();
-    audio_set_playing(true);
-    audio_resume();
-    // A deadline clock avoids setInterval's integer-ms drift and the resulting
-    // gradual audio queue overflow. 60.098 matches NTSC and latest JSNES.
+    apu_playing = true;
+    apu_origin=apu_context.currentTime+.04-apu_time/1789773;
+    if(apu_context) apu_context.resume();
     NES.nextFrameAt = performance.now();
     NES.loop = setTimeout(NES.next_frame, 0);
   },
-
+  
   next_frame: () => {
     if(NES.loop === null)return;
     NES.frame();
@@ -90,12 +86,13 @@ var NES = {
     if(now - NES.nextFrameAt > 3 * NES.frameTime) NES.nextFrameAt = now;
     NES.loop = setTimeout(NES.next_frame, Math.max(0, NES.nextFrameAt - now));
   },
-  
   // Pause
   pause: () => {
     clearTimeout(NES.loop);
     NES.loop = null;
-    audio_set_playing(false);
+    apu_playing = false;
+    apu_silence();
+    apu_flush();
   },
 
   // Reset
@@ -122,33 +119,28 @@ var NES = {
   // Render a new frame
   frame: () => {
     
+    
     var cycles;
     totalCycles = 0;
     endFrame = 0;
     
     // Repeatedly execute CPU instructions until the frame is fully rendered
     while(!endFrame){
-      if(apu_stalls){
-        cycles = Math.min(apu_stalls, 8);
-        apu_stalls -= cycles;
-      } else {
-        cycles = emulate();
-      }
+      cycles=emulate();
       apu_clock(cycles);
-
       for (i = cycles; i--;) {
         cpu_tick();
       }
     }
-    audio_flush();
+    apu_flush();
   },
   
-  keydown: (controller, button) => {
-    NES.controllers[controller].keydown(button);
+  keydown: button => {
+    NES.controller.keydown(button);
   },
 
-  keyup: (controller, button) => {
-    NES.controllers[controller].keyup(button);
+  keyup: button => {
+    NES.controller.keyup(button);
   },
   
   //haltCycles: (cycles) => {
