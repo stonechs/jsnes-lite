@@ -70,7 +70,7 @@ APU 与 CPU 的寄存器、DMC DMA 和 IRQ 同步逻辑保留在主线程，沿�
 可读版本：`jsnes-lite.readable.html`、`jsnes-lite.readable.js`；最小 JavaScript：`jsnes-lite.min.js`。
 完整构建说明、各候选体积和验证记录见该目录的 `README.md`、`sizes.json`、`verification-final.json`、`verification-js.json`。
 
-原输出仍保留在 `dist/` 根目录，并已原样归档到 `dist/v001-terser/`。
+原输出已原样归档到 `dist/v001-terser/`；`dist/` 根目录中的重复副本已移除。
 今后每个版本使用新的 `dist/vNNN-名称/` 目录；已定版目录不覆盖。
 `AGENTS.md` 已记录此规则，`RELEASED.json` 用于标记定版。
 
@@ -102,7 +102,7 @@ GitHub Releases API 返回空数组，无正式 Release 或 tag；这里的“�
 
 ## 使用
 
-双击 `dist/jsnes-lite-standalone.min.html`，选择本地 `.nes` 文件即可。
+双击 `dist/v001-terser/jsnes-lite-standalone.min.html`，选择本地 `.nes` 文件即可。
 页面已内嵌全部脚本，没有 CDN、外部脚本或远程 ROM 请求；不含游戏 ROM。
 方向键移动，X=A，C=B，Enter=Start，Esc=Select。
 沿用上游核心，未移植其他模拟器；页面仅改为本地 ROM 选择，保留播放、暂停、单帧、重置和 VRAM 查看。
@@ -118,14 +118,15 @@ GitHub Releases API 返回空数组，无正式 Release 或 tag；这里的“�
 
 ## 构建及核验
 
-`node build.cjs`：按上游 index.html 的脚本顺序合并，使用下载到 `tools/package/` 的
-Terser 5.51.2（官方 npm 包）压缩，再生成 HTML、gzip 和 `dist/sizes.json`。
+v001 构建：按上游 index.html 的脚本顺序合并，使用下载到 `tools/package/` 的
+Terser 5.51.2（官方 npm 包）压缩，生成的 HTML、gzip 和体积记录保存在
+`dist/v001-terser/`。当前运行 `node build.cjs` 会按版本规则生成新的版本目录。
 构建脚本使用 Node 内置模块，无需 npm install。
 
 `node verify.cjs`：使用本机 Edge 和当前环境自带 Playwright，在离线浏览器中通过 file://
 加载两份 HTML，再选择仓库自带 homebrew `croom.nes`。各运行 121 帧，画面非空，
 普通版和压缩版两次采样的帧哈希一致，无 JavaScript 错误，无 HTTP/HTTPS 请求，
-无外部脚本。截图和详细记录在 `dist/`。
+无外部脚本。截图和详细记录在 `dist/v001-terser/`。
 验证脚本中的 Playwright 路径为此机器路径，迁移机器时需调整。
 
 这只是启动、画面和键盘调用的冒烟验证，不是完整游戏兼容性测试。
