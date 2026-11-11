@@ -1,16 +1,18 @@
-# JSNES lite 单文件体积实测
+# JSNES lite 本地构建历史
 
-## 当前版本：v009（r14 界面，仅支持 .nes）
+本文是 v001 起的历史记录，不代表当前版本或当前构建入口。当前状态见仓库根目录 `README.md`；当前构建规则见 `build-support/README.md`。
 
-[独立运行版](dist/v009-r14-nes-only/jsnes-lite.min.html)，**13,191 字节**。保持 v008 的界面和按键，移除了 ZIP/7z 解包功能及相应代码；只加载 `.nes` ROM。可读版、工具与构建体积见 `dist/v009-r14-nes-only/`。
-构建下个版本：`node build-v007.mjs compile v010 r14-nes`，再 `node build-v007.mjs pack v010 r14-nes`。
+## v009（r14 界面，仅支持 .nes）
+
+[独立运行版](../dist/v009-r14-nes-only/jsnes-lite.min.html)，**13,191 字节**。保持 v008 的界面和按键，移除了 ZIP/7z 解包功能及相应代码；只加载 `.nes` ROM。可读版、工具与构建体积见 `../dist/v009-r14-nes-only/`。
+当时记录的后续构建命令（仅供历史参考）：`node build-v007.mjs compile v010 r14-nes`，再 `node build-v007.mjs pack v010 r14-nes`。
 
 ## v008（去调试核心 + r14 界面）
 
 已另存两个版本，旧版本全部保留：
 
-- `dist/v007-no-debug/jsnes-lite.min.html`：**11,500 字节**，删除 VRAM 调试显示/缓冲、音频诊断/统计协议和逐帧入口，保留简单操作界面。
-- `dist/v008-r14-ui/jsnes-lite.min.html`：**17,350 字节**，在相同去调试核心上移植用户指定的 JSNES r14 深色界面、静音、F 全屏、屏幕手柄、拖入文件和 ZIP/7z 加载。
+- `../dist/v007-no-debug/jsnes-lite.min.html`：**11,500 字节**，删除 VRAM 调试显示/缓冲、音频诊断/统计协议和逐帧入口，保留简单操作界面。
+- `../dist/v008-r14-ui/jsnes-lite.min.html`：**17,350 字节**，在相同去调试核心上移植用户指定的 JSNES r14 深色界面、静音、F 全屏、屏幕手柄、拖入文件和 ZIP/7z 加载。
 
 v008 键位为方向键、Z=B、X=A、空格=Select、Enter=Start、F=全屏。
 两个版本均包含可读 HTML/JS、独立最小 JS、精确字节和验证日志。APU 算法和音频缓冲参数保持不变。
@@ -66,7 +68,7 @@ APU 与 CPU 的寄存器、DMC DMA 和 IRQ 同步逻辑保留在主线程，沿�
 
 ## v002（Closure + Roadroller）
 
-最小独立文件：[`dist/v002-closure-roadroller/jsnes-lite.min.html`](dist/v002-closure-roadroller/jsnes-lite.min.html)，**6,420 字节（6.27 KiB）**，不含 ROM。
+最小独立文件：[`../dist/v002-closure-roadroller/jsnes-lite.min.html`](../dist/v002-closure-roadroller/jsnes-lite.min.html)，**6,420 字节（6.27 KiB）**，不含 ROM。
 可读版本：`jsnes-lite.readable.html`、`jsnes-lite.readable.js`；最小 JavaScript：`jsnes-lite.min.js`。
 完整构建说明、各候选体积和验证记录见该目录的 `README.md`、`sizes.json`、`verification-final.json`、`verification-js.json`。
 

@@ -13,7 +13,8 @@ Supports `.nes` and single-file LZMA1/LZMA2 `.7z`; no ZIP, CRC verification, or 
 - [V011 build notes](dist/v011-mapper30/README.md)
 - [V011 release notes](dist/v011-mapper30/RELEASE_NOTES.md)
 - [V011 byte counts, hashes, and tool versions](dist/v011-mapper30/sizes.json)
-- The root [`src/`](src/) and [`interfaces/`](interfaces/) directories track the current readable source. The V011 pipeline assembles the modules and interface, then compresses and packages the runtime.
+- [Project guide and source-of-truth rules](PROJECT_GUIDE.md)
+- The root [`src/`](src/) and [`interfaces/`](interfaces/) directories are the editable source. V011's exact build snapshot is archived at `dist/v011-mapper30/source/`; edits there are not the starting point for future development.
 - [Build instructions](build-support/README.md) · [Local development history](build-support/LOCAL-HISTORY.md)
 
 ## Previous release: V010 极致运行版
