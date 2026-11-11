@@ -28,6 +28,6 @@
     "allowFreeVars": false
   },
   "optimization": {
-    "reusedParameters": "D:\\2026work\\jsneslite\\dist\\V010_极致运行版\\search\\winner.json"
+    "reusedParameters": "dist/v010-extreme-runtime/search/winner.json"
   }
 }

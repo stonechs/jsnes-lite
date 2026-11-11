@@ -1,5 +1,5 @@
 import fs from 'node:fs';import path from 'node:path';import cp from 'node:child_process';
-const out=path.resolve(import.meta.dirname,'../dist/V010_极致运行版');
+const out=path.resolve(import.meta.dirname,'../dist/v010-extreme-runtime');
 const pools=JSON.parse(fs.readFileSync(out+'/search/candidates.json')).slice(0,8).concat([JSON.parse(fs.readFileSync(out+'/search/winner.json'))]);
 const seen=new Set(),candidates=pools.filter(c=>{let k=JSON.stringify(c.options);if(seen.has(k))return false;seen.add(k);return true;});
 const log=[];let best;

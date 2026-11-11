@@ -16,7 +16,7 @@ V010 由 V003_017 正式更名。最小 HTML、压缩/可读 JS、可读 HTML、
 - `source/`：运行源码、构建和搜索脚本快照；`tests/`：合成测试数据和单元检查。
 - `sizes.json`：精确字节、哈希及工具版本；`RELEASED.json`：整个发布目录的最终清单。
 
-在仓库根目录运行 `node --test --test-timeout=30000 dist/V010_极致运行版/tests/*.test.mjs`。测试用历史参考解码器已放入 `tests/references/`，无需下载中间试验版本；它们不编入运行 HTML，其中的 ZIP/CRC 代码只作为参考验证，V010 运行时没有 ZIP/CRC 功能。Mapper 对照仍使用仓库 `build-support/references/jsnes/` 中固定版本。
+在仓库根目录运行 `node --test --test-timeout=30000 dist/v010-extreme-runtime/tests/*.test.mjs`。测试用历史参考解码器已放入 `tests/references/`，无需下载中间试验版本；它们不编入运行 HTML，其中的 ZIP/CRC 代码只作为参考验证，V010 运行时没有 ZIP/CRC 功能。Mapper 对照仍使用仓库 `build-support/references/jsnes/` 中固定版本。
 
 143 项单元检查通过。另有离线浏览器验证：三个 HTML 成品均实际验证八键按下/释放、组合键、失焦、修饰键和未知键过滤、重载清键及空闲第二端口，使用 $4016/$4017 读取确认；LZMA1/LZMA2 数据与压缩头、三种非默认属性、全屏、静音、四种尺寸和短错误提示通过。中文/长原生异常均显示 Fail。浏览器检查脚本使用本机 Windows Edge/Playwright 路径，在其他机器上需调整。未进行所有商业 ROM 的长期兼容性验证。
 

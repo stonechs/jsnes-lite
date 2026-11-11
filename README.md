@@ -7,12 +7,12 @@ DEMO: https://xem.github.io/jsnes-lite
 
 ## 最新版：V010 极致运行版
 
-**独立运行文件：[jsnes-lite.min.html](dist/V010_极致运行版/jsnes-lite.min.html)，9,997 字节。** 下载后直接用浏览器打开，选择本地 ROM。
+**独立运行文件：[jsnes-lite.min.html](dist/v010-extreme-runtime/jsnes-lite.min.html)，9,997 字节。** 下载后直接用浏览器打开，选择本地 ROM。
 
 支持 `.nes` 和单文件 LZMA1/LZMA2 `.7z`；不支持 ZIP，没有 CRC 校验，也没有 DMC 功能。精简四通道音频，支持 Mapper 0–4 和单手柄，提供全屏与静音。
 
-- [V010 与 V009 的功能差异](dist/V010_极致运行版/VERSION_NOTES.md)
-- [V010 发布文件、源码与构建记录](dist/V010_极致运行版/README.md)
+- [V010 与 V009 的功能差异](dist/v010-extreme-runtime/VERSION_NOTES.md)
+- [V010 发布文件、源码与构建记录](dist/v010-extreme-runtime/README.md)
 - 根目录 [`src/`](src/) 和 [`interfaces/`](interfaces/) 始终对应最新发布版本；Node 构建脚本组装模拟器模块与界面源码，再压缩并打包。
 - [构建说明](build-support/README.md) · [本地开发记录](build-support/LOCAL-HISTORY.md)
 
