@@ -8,3 +8,5 @@
 - Keep the upstream checkout unchanged. Apply build adaptations outside it and document them.
 ## 项目记忆
 - 需要了解项目架构时，读取 \PROJECT_GUIDE.md。
+- progress.md 保留当前开发状态和下一步。
+- bugs.md 记录已经验证的 ROM 故障、根因及修复结果。
