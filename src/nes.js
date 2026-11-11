@@ -18,6 +18,7 @@ var NES = {
   
   // ROM globals
   mapper: 0,
+  mapper30Battery: false,
   mirroring: 0,
   prg: [],
   chr: [],

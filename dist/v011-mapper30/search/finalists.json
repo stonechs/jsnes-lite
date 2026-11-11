@@ -1,0 +1,243 @@
+[
+  {
+    "tag": "v011-seed-refine",
+    "score": 9750,
+    "bytes": 10107,
+    "options": {
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        13,
+        41,
+        42,
+        52,
+        81
+      ],
+      "maxMemoryMB": 150,
+      "precision": 15,
+      "modelMaxCount": 3,
+      "modelRecipBaseCount": 30,
+      "recipLearningRate": 1746,
+      "numAbbreviations": 10,
+      "dynamicModels": 1,
+      "allowFreeVars": false
+    }
+  },
+  {
+    "tag": "v010-seed-warm",
+    "score": 9751,
+    "bytes": 10108,
+    "options": {
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        13,
+        41,
+        42,
+        52,
+        81
+      ],
+      "maxMemoryMB": 150,
+      "precision": 15,
+      "modelMaxCount": 3,
+      "modelRecipBaseCount": 30,
+      "recipLearningRate": 1459,
+      "numAbbreviations": 10,
+      "dynamicModels": 1,
+      "allowFreeVars": false
+    }
+  },
+  {
+    "tag": "v010-seed-warm",
+    "score": 9752,
+    "bytes": 10109,
+    "options": {
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        13,
+        41,
+        42,
+        52,
+        81
+      ],
+      "maxMemoryMB": 150,
+      "precision": 15,
+      "modelMaxCount": 3,
+      "modelRecipBaseCount": 32,
+      "recipLearningRate": 1459,
+      "numAbbreviations": 10,
+      "dynamicModels": 1,
+      "allowFreeVars": false
+    }
+  },
+  {
+    "tag": "warm",
+    "score": 9640,
+    "bytes": 10110,
+    "options": {
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        13,
+        41,
+        42,
+        52,
+        81
+      ],
+      "maxMemoryMB": 150,
+      "precision": 15,
+      "modelMaxCount": 3,
+      "modelRecipBaseCount": 26,
+      "recipLearningRate": 1459,
+      "numAbbreviations": 10,
+      "dynamicModels": 1,
+      "allowFreeVars": false
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9764,
+    "bytes": 10120,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4,
+      "numAbbreviations": 10,
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        6,
+        7,
+        13,
+        25,
+        36,
+        56,
+        90,
+        162
+      ],
+      "precision": 13,
+      "recipLearningRate": 930
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9768,
+    "bytes": 10124,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4,
+      "numAbbreviations": 10,
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        6,
+        7,
+        13,
+        25,
+        36,
+        56,
+        90,
+        162
+      ],
+      "precision": 13,
+      "recipLearningRate": 1333
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9772,
+    "bytes": 10128,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4,
+      "numAbbreviations": 10,
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        6,
+        7,
+        13,
+        25,
+        36,
+        56,
+        90,
+        162
+      ],
+      "precision": 13
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9774,
+    "bytes": 10132,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4,
+      "numAbbreviations": 10,
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        6,
+        7,
+        13,
+        25,
+        36,
+        56,
+        90,
+        162
+      ]
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9776,
+    "bytes": 10134,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4,
+      "numAbbreviations": 10,
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        6,
+        7,
+        13,
+        21,
+        25,
+        36,
+        42,
+        57
+      ]
+    }
+  }
+]

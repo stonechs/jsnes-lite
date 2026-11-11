@@ -1,7 +1,7 @@
 # Build and version maintenance
 
-The root `src/` and `interfaces/` directories track the latest published readable emulator and Web interface source. V010's build pipeline reads its versioned inputs from `dist/v010-extreme-runtime/source/`; these root files are synchronized copies for convenient browsing. Node assembles, optimizes, and packages the runtime, which runs in the browser.
+The root `src/` and `interfaces/` directories track the latest readable emulator and Web interface source. V011's build pipeline reads its versioned inputs from `dist/v011-mapper30/source/`; these root files are synchronized copies for convenient browsing. Node assembles, optimizes, and packages the runtime, which runs in the browser.
 
-The complete V010 build inputs, runnable artifacts, and validation records are preserved under `dist/v010-extreme-runtime/`. Historical release outputs remain under `dist/`. V009 root source copies are preserved in `archive/v009-src/` and `archive/v009-interfaces/`. The original upstream checkout under `upstream/` remains unchanged.
+The V010 finalized build remains under `dist/v010-extreme-runtime/`. V011 keeps primary HTML and build metadata at its root, source snapshots in `source/`, generated build artifacts in `build/`, and licenses in `licenses/`. The original upstream checkout under `upstream/` remains unchanged.
 
-V010 supports NES and single-file LZMA1/LZMA2 7z. It does not support ZIP, CRC verification, or DMC. For future versions, sync the newest readable core and interface into root `src/` and `interfaces/`, create a new numbered release directory under `dist/`, and push a matching Git tag. Keep earlier release outputs intact.
+V010 supports NES and single-file LZMA1/LZMA2 7z. It does not support ZIP, CRC verification, or DMC. For future versions, sync the newest readable core and interface into root `src/` and `interfaces/`, and use an English-named numbered directory under `dist/`. Ordinary builds remain unfinalized: create `RELEASED.json` only after the user explicitly requests finalization. Keep the upstream checkout unchanged and document build adaptations outside it.

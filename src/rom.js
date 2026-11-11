@@ -5,6 +5,7 @@ NES.parse=data=>{
   var offset=16+((data[6]&4)?512:0);
   if(data.length<offset+data[4]*16384+data[5]*8192)throw new Error('EOF');
   NES.mapper=(data[6]>>4)|(data[7]&240);
+  NES.mapper30Battery=NES.mapper===30&&!!(data[6]&2);
   NES.fourScreen=!!(data[6]&8);
   NES.headerMirroring=NES.mirroring=NES.fourScreen?2:(data[6]&1)?0:1;
   NES.chrRAM=data[5]===0;
@@ -16,5 +17,5 @@ NES.parse=data=>{
   for(bank=0;bank<data[5];bank++){
     NES.chr.push(data.slice(offset,offset+8192));offset+=8192;
   }
-  if(NES.chrRAM)NES.chr.push(new Uint8Array(8192));
+  if(NES.chrRAM)for(bank=0;bank<(NES.mapper===30?4:1);bank++)NES.chr.push(new Uint8Array(8192));
 };

@@ -1,0 +1,20 @@
+[
+  {
+    "tag": "v010-seed-warm",
+    "evaluations": 311,
+    "score": 9750,
+    "elapsedMs": 34466
+  },
+  {
+    "tag": "v011-seed-refine",
+    "evaluations": 311,
+    "score": 9750,
+    "elapsedMs": 30400
+  },
+  {
+    "tag": "default-model",
+    "evaluations": 304,
+    "score": 9764,
+    "elapsedMs": 27220
+  }
+]

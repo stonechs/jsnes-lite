@@ -1,5 +1,5 @@
-# V010 core source
+# V011 core source
 
-These readable JavaScript files are the current emulator modules, mirrored from the V010 release source. The V010 build pipeline reads its immutable inputs from `dist/V010_极致运行版/source/`, then assembles, optimizes, and packages the browser runtime.
+These readable JavaScript files are the current emulator modules. The V011 build pipeline uses the matching snapshots in `dist/v011-mapper30/source/` and combines them with the Web interface source from `interfaces/`.
 
-V010 supports NES ROMs and single-file LZMA1/LZMA2 7z archives. It does not support ZIP, CRC verification, or DMC. See `dist/V010_极致运行版/VERSION_NOTES.md`.
+V011 supports Mapper 0–4 and Mapper 30 UNROM-512 bank switching for iNES 1.0 ROMs. Mapper 30 PRG self-flash is not emulated. V011 also accepts single-file LZMA1/LZMA2 7z archives; it does not support ZIP, CRC verification, or DMC. See `dist/v011-mapper30/README.md` for build details and `dist/v011-mapper30/sizes.json` for exact sizes, hashes, and tool versions.

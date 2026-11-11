@@ -1,0 +1,37 @@
+{
+  "options": {
+    "sparseSelectors": [
+      0,
+      1,
+      2,
+      3,
+      5,
+      6,
+      7,
+      13,
+      41,
+      42,
+      52,
+      81
+    ],
+    "maxMemoryMB": 150,
+    "precision": 15,
+    "modelMaxCount": 3,
+    "modelRecipBaseCount": 30,
+    "recipLearningRate": 1746,
+    "resourcePool": {
+      "arrayBuffers": {},
+      "wasmRunners": {}
+    },
+    "numAbbreviations": 10,
+    "dynamicModels": 1,
+    "allowFreeVars": false
+  },
+  "optimization": {
+    "parameterFile": "D:\\2026work\\GitHubJSNesLite\\jsnes-lite\\dist\\v011-mapper30\\search\\winner.json",
+    "selection": "smallest standalone Base122 HTML bytes among Roadroller finalists",
+    "tag": "v011-seed-refine",
+    "roadrollerScore": 9750,
+    "standaloneBytes": 10107
+  }
+}

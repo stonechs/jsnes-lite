@@ -103,7 +103,7 @@ var mapper_reset=()=>{
   }
 };
 NES.load=()=>{
-  if(![0,1,2,3,4].includes(NES.mapper))throw new Error('Map'+NES.mapper);
+  if(![0,1,2,3,4,30].includes(NES.mapper))throw new Error('Map'+NES.mapper);
   mapper_ram=new Uint8Array(8192);
   mapper_reset();
 };
@@ -140,5 +140,15 @@ var mapper_write=(address,value)=>{
       case 0xe000:mmc3_enabled=mapper_irq=0;break;
       case 0xe001:mmc3_enabled=1;break;
     }
+  }else if(NES.mapper===30&&address>=(NES.mapper30Battery?0xc000:0x8000)){
+    // UNROM-512: switch a 16 KiB PRG bank, an 8 KiB CHR-RAM bank, and
+    // optionally select lower single-screen mirroring. iNES battery-backed
+    // images reserve $8000-$BFFF writes for flash commands, so their bank
+    // register is decoded only at $C000-$FFFF. Non-flash boards have bus
+    // conflicts between the ROM data and the value written by the CPU.
+    var bankValue=NES.mapper30Battery?value:(value&mapper_prg_read(address));
+    mapper_map_prg(0,(bankValue&31)*2,2);
+    mapper_map_chr(0,((bankValue>>5)&3)*8,8);
+    if(!NES.fourScreen)NES.mirroring=(bankValue&128)?3:NES.headerMirroring;
   }
 };

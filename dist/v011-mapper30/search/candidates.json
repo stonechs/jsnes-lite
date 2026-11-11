@@ -1,0 +1,339 @@
+[
+  {
+    "tag": "v010-seed-warm",
+    "score": 9750,
+    "options": {
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        13,
+        41,
+        42,
+        52,
+        81
+      ],
+      "maxMemoryMB": 150,
+      "precision": 15,
+      "modelMaxCount": 3,
+      "modelRecipBaseCount": 30,
+      "recipLearningRate": 1746,
+      "numAbbreviations": 10,
+      "dynamicModels": 1,
+      "allowFreeVars": false
+    }
+  },
+  {
+    "tag": "v011-seed-refine",
+    "score": 9750,
+    "options": {
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        13,
+        41,
+        42,
+        52,
+        81
+      ],
+      "maxMemoryMB": 150,
+      "precision": 15,
+      "modelMaxCount": 3,
+      "modelRecipBaseCount": 30,
+      "recipLearningRate": 1746,
+      "numAbbreviations": 10,
+      "dynamicModels": 1,
+      "allowFreeVars": false
+    }
+  },
+  {
+    "tag": "v010-seed-warm",
+    "score": 9751,
+    "options": {
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        13,
+        41,
+        42,
+        52,
+        81
+      ],
+      "maxMemoryMB": 150,
+      "precision": 15,
+      "modelMaxCount": 3,
+      "modelRecipBaseCount": 30,
+      "recipLearningRate": 1459,
+      "numAbbreviations": 10,
+      "dynamicModels": 1,
+      "allowFreeVars": false
+    }
+  },
+  {
+    "tag": "v010-seed-warm",
+    "score": 9752,
+    "options": {
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        13,
+        41,
+        42,
+        52,
+        81
+      ],
+      "maxMemoryMB": 150,
+      "precision": 15,
+      "modelMaxCount": 3,
+      "modelRecipBaseCount": 32,
+      "recipLearningRate": 1459,
+      "numAbbreviations": 10,
+      "dynamicModels": 1,
+      "allowFreeVars": false
+    }
+  },
+  {
+    "tag": "v010-seed-warm",
+    "score": 9753,
+    "options": {
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        13,
+        41,
+        42,
+        52,
+        81
+      ],
+      "maxMemoryMB": 150,
+      "precision": 15,
+      "modelMaxCount": 3,
+      "modelRecipBaseCount": 26,
+      "recipLearningRate": 1459,
+      "numAbbreviations": 10,
+      "dynamicModels": 1,
+      "allowFreeVars": false
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9764,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4,
+      "numAbbreviations": 10,
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        6,
+        7,
+        13,
+        25,
+        36,
+        56,
+        90,
+        162
+      ],
+      "precision": 13,
+      "recipLearningRate": 930
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9768,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4,
+      "numAbbreviations": 10,
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        6,
+        7,
+        13,
+        25,
+        36,
+        56,
+        90,
+        162
+      ],
+      "precision": 13,
+      "recipLearningRate": 1333
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9772,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4,
+      "numAbbreviations": 10,
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        6,
+        7,
+        13,
+        25,
+        36,
+        56,
+        90,
+        162
+      ],
+      "precision": 13
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9774,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4,
+      "numAbbreviations": 10,
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        6,
+        7,
+        13,
+        25,
+        36,
+        56,
+        90,
+        162
+      ]
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9776,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4,
+      "numAbbreviations": 10,
+      "sparseSelectors": [
+        0,
+        1,
+        2,
+        3,
+        6,
+        7,
+        13,
+        21,
+        25,
+        36,
+        42,
+        57
+      ]
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9790,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4,
+      "numAbbreviations": 10
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9795,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4,
+      "numAbbreviations": 12
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9800,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4,
+      "numAbbreviations": 16
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9804,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4,
+      "numAbbreviations": 8
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9820,
+    "options": {
+      "modelRecipBaseCount": 10,
+      "modelMaxCount": 4
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9824,
+    "options": {
+      "modelRecipBaseCount": 10
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9825,
+    "options": {
+      "modelRecipBaseCount": 9
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9828,
+    "options": {
+      "modelRecipBaseCount": 14
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9829,
+    "options": {
+      "modelRecipBaseCount": 6
+    }
+  },
+  {
+    "tag": "default-model",
+    "score": 9836,
+    "options": {}
+  }
+]
