@@ -1,0 +1,2 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';import {test} from 'node:test';
+test('diagnostic render paths, UI and logging removed from runtime source',()=>{const dir=new URL('../source/',import.meta.url);for(const file of fs.readdirSync(dir).filter(n=>/\.(js|html)$/.test(n))){const text=fs.readFileSync(new URL(file,dir),'utf8');assert.doesNotMatch(text,/debugVRAM|vramCanvas|vramCtx|vramData|NES\.vramBuffer|p_debug|console\./,file);}});

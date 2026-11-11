@@ -1,0 +1,29 @@
+{
+  "tag": "warm",
+  "score": 9640,
+  "bytes": 9997,
+  "options": {
+    "sparseSelectors": [
+      0,
+      1,
+      2,
+      3,
+      5,
+      6,
+      7,
+      13,
+      41,
+      42,
+      52,
+      81
+    ],
+    "maxMemoryMB": 150,
+    "precision": 15,
+    "modelMaxCount": 3,
+    "modelRecipBaseCount": 26,
+    "recipLearningRate": 1459,
+    "numAbbreviations": 10,
+    "dynamicModels": 1,
+    "allowFreeVars": false
+  }
+}

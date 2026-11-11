@@ -20,3 +20,7 @@ v010 为示例，使用前确认编号未占用。定版目录不可覆盖。
 部分历史浏览器测试使用原机器的 Edge/Playwright 绝对路径，跨机器需要调整。
 
 上游和参考源码采用无 .git 的固定快照，构建报告使用固定的原始提交编号，避免误报当前仓库提交。
+
+## V010 极致运行版
+
+最新运行文件和可读源码见 `../dist/V010_极致运行版/`。仅支持 NES/单文件 LZMA1 或 LZMA2 7z，不支持 ZIP，无 CRC 校验，无 DMC。差异说明见该目录 VERSION_NOTES.md。`build-V010.mjs`、`search-V010.mjs`、`select-V010.mjs` 保留构建流程；定版目录不覆盖，重建请另用新编号。V010 单元测试命令：从仓库根目录运行 `node --test --test-timeout=30000 dist/V010_极致运行版/tests/*.test.mjs`。

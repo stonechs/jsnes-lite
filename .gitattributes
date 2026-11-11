@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# V010 release bytes and manifests are immutable; do not normalize line endings.
+dist/V010_极致运行版/** -text

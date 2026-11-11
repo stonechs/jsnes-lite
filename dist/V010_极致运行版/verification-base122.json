@@ -1,0 +1,15 @@
+{
+  "identical": true,
+  "result": [
+    {
+      "file": "roadroller.min.js",
+      "decodedBytes": 19240,
+      "sha256": "15ed000a7c91c17c7daac31dd670fcda5bd22e92d59d8487d0ad97fb1dcc6f86"
+    },
+    {
+      "file": "base122.min.js",
+      "decodedBytes": 19240,
+      "sha256": "15ed000a7c91c17c7daac31dd670fcda5bd22e92d59d8487d0ad97fb1dcc6f86"
+    }
+  ]
+}

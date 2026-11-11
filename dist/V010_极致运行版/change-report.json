@@ -1,0 +1,13 @@
+{
+  "version": "V010",
+  "htmlBytes": 9997,
+  "targetBytesExclusive": 10000,
+  "targetMet": true,
+  "maxErrorCodeCharacters": 6,
+  "errorCodeAlphabet": "ASCII letters/digits",
+  "unexpectedErrorFallback": "Fail",
+  "unitTestsPassed": 143,
+  "keyboardArtifactsTested": 3,
+  "errorArtifactsTested": 3,
+  "existingFeaturesRetained": true
+}

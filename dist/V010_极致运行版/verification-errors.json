@@ -1,0 +1,191 @@
+[
+  {
+    "build": "jsnes-lite.readable.html",
+    "checks": [
+      {
+        "name": "crc.7z",
+        "expected": "crc.7z"
+      },
+      {
+        "name": "short.7z",
+        "expected": "EOF"
+      },
+      {
+        "name": "bad.7z",
+        "expected": "Fmt"
+      },
+      {
+        "name": "bad.nes",
+        "expected": "ROM"
+      },
+      {
+        "name": "short.nes",
+        "expected": "EOF"
+      },
+      {
+        "name": "nes2.nes",
+        "expected": "NES2"
+      },
+      {
+        "name": "mapper.nes",
+        "expected": "Map5"
+      },
+      {
+        "name": "maxmapper.nes",
+        "expected": "Map255"
+      },
+      {
+        "name": "stored.7z",
+        "expected": "Codec"
+      },
+      {
+        "name": "multiple.7z",
+        "expected": "Multi"
+      },
+      {
+        "name": "empty.7z",
+        "expected": "Empty"
+      },
+      {
+        "name": "fullscreen denied",
+        "expected": "Full"
+      },
+      {
+        "name": "unexpected 故障",
+        "expected": "Fail"
+      },
+      {
+        "name": "unexpected A very long native failure",
+        "expected": "Fail"
+      }
+    ],
+    "lzma2": "lzma2.7z",
+    "errors": []
+  },
+  {
+    "build": "closure.min.html",
+    "checks": [
+      {
+        "name": "crc.7z",
+        "expected": "crc.7z"
+      },
+      {
+        "name": "short.7z",
+        "expected": "EOF"
+      },
+      {
+        "name": "bad.7z",
+        "expected": "Fmt"
+      },
+      {
+        "name": "bad.nes",
+        "expected": "ROM"
+      },
+      {
+        "name": "short.nes",
+        "expected": "EOF"
+      },
+      {
+        "name": "nes2.nes",
+        "expected": "NES2"
+      },
+      {
+        "name": "mapper.nes",
+        "expected": "Map5"
+      },
+      {
+        "name": "maxmapper.nes",
+        "expected": "Map255"
+      },
+      {
+        "name": "stored.7z",
+        "expected": "Codec"
+      },
+      {
+        "name": "multiple.7z",
+        "expected": "Multi"
+      },
+      {
+        "name": "empty.7z",
+        "expected": "Empty"
+      },
+      {
+        "name": "fullscreen denied",
+        "expected": "Full"
+      },
+      {
+        "name": "unexpected 故障",
+        "expected": "Fail"
+      },
+      {
+        "name": "unexpected A very long native failure",
+        "expected": "Fail"
+      }
+    ],
+    "lzma2": "lzma2.7z",
+    "errors": []
+  },
+  {
+    "build": "jsnes-lite.min.html",
+    "checks": [
+      {
+        "name": "crc.7z",
+        "expected": "crc.7z"
+      },
+      {
+        "name": "short.7z",
+        "expected": "EOF"
+      },
+      {
+        "name": "bad.7z",
+        "expected": "Fmt"
+      },
+      {
+        "name": "bad.nes",
+        "expected": "ROM"
+      },
+      {
+        "name": "short.nes",
+        "expected": "EOF"
+      },
+      {
+        "name": "nes2.nes",
+        "expected": "NES2"
+      },
+      {
+        "name": "mapper.nes",
+        "expected": "Map5"
+      },
+      {
+        "name": "maxmapper.nes",
+        "expected": "Map255"
+      },
+      {
+        "name": "stored.7z",
+        "expected": "Codec"
+      },
+      {
+        "name": "multiple.7z",
+        "expected": "Multi"
+      },
+      {
+        "name": "empty.7z",
+        "expected": "Empty"
+      },
+      {
+        "name": "fullscreen denied",
+        "expected": "Full"
+      },
+      {
+        "name": "unexpected 故障",
+        "expected": "Fail"
+      },
+      {
+        "name": "unexpected A very long native failure",
+        "expected": "Fail"
+      }
+    ],
+    "lzma2": "lzma2.7z",
+    "errors": []
+  }
+]

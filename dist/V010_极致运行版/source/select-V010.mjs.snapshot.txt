@@ -1,0 +1,7 @@
+import fs from 'node:fs';import path from 'node:path';import cp from 'node:child_process';
+const out=path.resolve(import.meta.dirname,'../dist/V010_极致运行版');
+const pools=JSON.parse(fs.readFileSync(out+'/search/candidates.json')).slice(0,8).concat([JSON.parse(fs.readFileSync(out+'/search/winner.json'))]);
+const seen=new Set(),candidates=pools.filter(c=>{let k=JSON.stringify(c.options);if(seen.has(k))return false;seen.add(k);return true;});
+const log=[];let best;
+for(let i=0;i<candidates.length;i++){const c=candidates[i];fs.writeFileSync(out+'/search/winner.json',JSON.stringify(c,null,2));const run=cp.spawnSync(process.execPath,[path.resolve(import.meta.dirname,'build-V010.mjs'),'pack'],{encoding:'utf8',maxBuffer:1e6});if(run.status!==0)throw Error(run.stderr);const bytes=fs.statSync(out+'/jsnes-lite.min.html').size;const r={tag:c.tag,score:c.score,bytes,options:c.options};log.push(r);if(!best||bytes<best.bytes)best=r;console.log(JSON.stringify({candidate:i+1,tag:c.tag,bytes,best:best.bytes}));}
+fs.writeFileSync(out+'/search/finalists.json',JSON.stringify(log,null,2));fs.writeFileSync(out+'/search/winner.json',JSON.stringify(best,null,2));const run=cp.spawnSync(process.execPath,[path.resolve(import.meta.dirname,'build-V010.mjs'),'pack'],{encoding:'utf8',maxBuffer:1e6});if(run.status!==0)throw Error(run.stderr);console.log(JSON.stringify({done:true,bestBytes:best.bytes,candidates:log.length}));

@@ -1,0 +1,5 @@
+{"tag":"warm","evaluations":1,"score":9641,"seconds":0}
+{"tag":"warm","evaluations":11,"score":9640,"seconds":1}
+completed warm
+completed refine
+{"done":true,"bestScore":9640,"searches":2,"evaluations":618}

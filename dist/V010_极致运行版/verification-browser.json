@@ -1,0 +1,119 @@
+[
+  {
+    "name": "jsnes-lite.readable.html",
+    "errors": [],
+    "cases": [
+      {
+        "file": "expected.nes",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/lzma.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/lzma-header.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/lzma2.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/lzma2-header.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/properties-0-4-4.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/properties-4-0-0.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/properties-2-2-3.7z",
+        "hash": 1050648005
+      }
+    ],
+    "zipRejected": true
+  },
+  {
+    "name": "closure.min.html",
+    "errors": [],
+    "cases": [
+      {
+        "file": "expected.nes",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/lzma.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/lzma-header.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/lzma2.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/lzma2-header.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/properties-0-4-4.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/properties-4-0-0.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/properties-2-2-3.7z",
+        "hash": 1050648005
+      }
+    ],
+    "zipRejected": true
+  },
+  {
+    "name": "jsnes-lite.min.html",
+    "errors": [],
+    "cases": [
+      {
+        "file": "expected.nes",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/lzma.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/lzma-header.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/lzma2.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/lzma2-header.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/properties-0-4-4.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/properties-4-0-0.7z",
+        "hash": 1050648005
+      },
+      {
+        "file": "archives/properties-2-2-3.7z",
+        "hash": 1050648005
+      }
+    ],
+    "zipRejected": true
+  }
+]

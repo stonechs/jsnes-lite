@@ -1,0 +1,3 @@
+const fs=require('fs'),vm=require('vm'),crypto=require('crypto'),out='dist/V010_极致运行版';const result=[];
+for(const file of ['roadroller.min.js','base122.min.js']){let decoded;vm.runInNewContext(fs.readFileSync(out+'/'+file,'utf8'),{eval:value=>{decoded=value;}},{timeout:30000});if(typeof decoded!=='string')throw Error('No decoded script');result.push({file,decodedBytes:Buffer.byteLength(decoded),sha256:crypto.createHash('sha256').update(decoded).digest('hex')});}
+if(result[0].sha256!==result[1].sha256)throw Error('Base122 mismatch');fs.writeFileSync(out+'/verification-base122.json',JSON.stringify({identical:true,result},null,2));console.log(JSON.stringify(result));

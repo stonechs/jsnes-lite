@@ -1,0 +1,26 @@
+{
+  "version": "V010",
+  "renamedFrom": "V003_017",
+  "previousReleaseManifestSHA256": "f3a6b439ab0dfe44899edb39b8ca8bf468158306c9e14fc7e87549bce821369b",
+  "standaloneHTMLBytes": 9997,
+  "runtimeFilesUnchanged": {
+    "base122.loader.min.js": "16f42a23b01b72d46f4909a0a947ac71ba06b2c338eafa4a66c57c85a0587cbd",
+    "base122.loader.readable.js": "244386ca6c23535d72ea28efd1b6a7a3fe1b726535c166bbba8bb5a5783ccc31",
+    "base122.min.html": "b7c1830f10330128acbbb26ce85e744276c084ad65a14b116ae52b044042cbc5",
+    "base122.min.js": "254508d44221cfb1b56ee0dc75ec2b34be93cbc67f7b75dc985054b539c49236",
+    "closure.externs.js": "02c1dbcf9af71b24df18fec614fe90fd52ee28cab0c2c0827bc7dd30b8772419",
+    "closure.input.js": "4effa6d7a5da4d66e83e79b75627dec7fd489a7a1e744653f70675a698c57342",
+    "closure.min.html": "324d8601e07bb8ea8a4c4e10b6a9fb56ec5d8f7e37da8552d0585bd889a34dc4",
+    "closure.min.js": "13614e75a7586a6dbf3ab887986d8dae0cc784c5dab8dcce008c424af07ef839",
+    "jsnes-lite.min.html": "b7c1830f10330128acbbb26ce85e744276c084ad65a14b116ae52b044042cbc5",
+    "jsnes-lite.min.html.gz": "193d52155e9eaa15d66a05a301c6313bc2262ecc66913d489f25f9c3f99fff67",
+    "jsnes-lite.min.js": "254508d44221cfb1b56ee0dc75ec2b34be93cbc67f7b75dc985054b539c49236",
+    "jsnes-lite.readable.html": "f1cf91c9d94f35b4b33c5dfc957ffcd84dbbd3a866370bb116b4b953108120fc",
+    "jsnes-lite.readable.js": "3782f43976b556e5072b876600dc54148e26e21a528b79727240cb024dd4890a",
+    "lzma-decoder.mjs": "43b20587473f94d9af3eca0ec0933fc7a63d14bea16734ec5bf34aeacd3ea01f",
+    "roadroller-payload.bin": "9eeab1d42c6fe9fbd44c6be8c426244b588fc13faf7027882a1fc394367419dd",
+    "roadroller.min.html": "c087c145446b314b2e1fa8335f10d744249996d3b9e6d80548156aabb514cdce",
+    "roadroller.min.js": "cb3ab7037e315ae36786677676d0f276e082565f68b759dc19d21582fb4b3c70"
+  },
+  "testReferenceRelocationOnly": true
+}

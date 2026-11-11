@@ -1,0 +1,48 @@
+{
+  "result": [
+    {
+      "width": 1280,
+      "height": 720,
+      "canvas": {
+        "x": 315.734375,
+        "y": 52.5,
+        "width": 648.53125,
+        "height": 607.984375
+      }
+    },
+    {
+      "width": 800,
+      "height": 600,
+      "canvas": {
+        "x": 139.734375,
+        "y": 52.5,
+        "width": 520.53125,
+        "height": 487.984375
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "canvas": {
+        "x": 12,
+        "y": 246.9375,
+        "width": 366,
+        "height": 343.125
+      }
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "canvas": {
+        "x": 273.734375,
+        "y": 52.5,
+        "width": 296.53125,
+        "height": 277.984375
+      }
+    }
+  ],
+  "mute": true,
+  "fullscreenButton": true,
+  "fullscreenKey": true,
+  "errors": []
+}

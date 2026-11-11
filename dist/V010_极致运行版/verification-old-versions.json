@@ -1,0 +1,127 @@
+[
+  {
+    "version": "v001-terser",
+    "checked": 11,
+    "failed": []
+  },
+  {
+    "version": "v002-closure-roadroller",
+    "checked": 77,
+    "failed": []
+  },
+  {
+    "version": "v003-mappers-1-4",
+    "checked": 78,
+    "failed": []
+  },
+  {
+    "version": "V003_001_主线程音频与绘图优化",
+    "checked": 33,
+    "failed": []
+  },
+  {
+    "version": "V003_002_主线程五声道PCM",
+    "checked": 46,
+    "failed": []
+  },
+  {
+    "version": "V003_003_轻量混合音频",
+    "checked": 40,
+    "failed": []
+  },
+  {
+    "version": "V003_004_精简界面与Base122",
+    "checked": 50,
+    "failed": []
+  },
+  {
+    "version": "V003_005_单文件ZIP与7z精简",
+    "checked": 134,
+    "failed": []
+  },
+  {
+    "version": "V003_006_压缩包组件体积测量",
+    "checked": 253,
+    "failed": []
+  },
+  {
+    "version": "V003_007_紧凑JS_LZMA1解码",
+    "checked": 184,
+    "failed": []
+  },
+  {
+    "version": "V003_008_仅7z跳过CRC",
+    "checked": 205,
+    "failed": []
+  },
+  {
+    "version": "V003_009_CRC清理与界面精简",
+    "checked": 187,
+    "failed": []
+  },
+  {
+    "version": "V003_010_去DMC声音保留接口",
+    "checked": 165,
+    "failed": []
+  },
+  {
+    "version": "V003_011_去DMC及接口",
+    "checked": 165,
+    "failed": []
+  },
+  {
+    "version": "V003_012_LZMA2与CRC短提示",
+    "checked": 205,
+    "failed": []
+  },
+  {
+    "version": "V003_013_极致压缩终版",
+    "checked": 200,
+    "failed": []
+  },
+  {
+    "version": "V003_014_单手柄去Mapper30",
+    "checked": 198,
+    "failed": []
+  },
+  {
+    "version": "V003_015_修复压缩版按键",
+    "checked": 201,
+    "failed": []
+  },
+  {
+    "version": "V003_016_去CRC校验与变量",
+    "checked": 200,
+    "failed": []
+  },
+  {
+    "version": "v004-audioworklet",
+    "checked": 97,
+    "failed": []
+  },
+  {
+    "version": "v005-audio-stability",
+    "checked": 102,
+    "failed": []
+  },
+  {
+    "version": "v006-base122",
+    "checked": 91,
+    "failed": []
+  },
+  {
+    "version": "v007-no-debug",
+    "checked": 73,
+    "failed": []
+  },
+  {
+    "version": "v008-r14-ui",
+    "checked": 77,
+    "failed": []
+  },
+  {
+    "version": "v009-r14-nes-only",
+    "checked": 66,
+    "failed": []
+  }
+]
