@@ -4,7 +4,7 @@ This directory contains versioned build scripts, vendored tools, packaging adapt
 
 ## Current release
 
-V011 is finalized at `../dist/v011-mapper30/`. Its `build-V011.mjs`, `search-V011.mjs`, and `select-V011.mjs` scripts remain here as historical, version-specific entry points. They target the finalized directory and refuse to overwrite it. See that directory's README for its original build record.
+V012 is the latest finalized release at `../dist/v012-oam-address-reset/`; its scripts are under `versions/v012/` and refuse to overwrite the finalized directory. The V011 scripts remain here as historical, version-specific entry points.
 
 ## Future versions
 
@@ -14,7 +14,7 @@ Run a script from the directory documented by that script. Check its source path
 
 ## Repository rules
 
-- Preserve every existing `dist/` version and its artifacts. Every current version is finalized.
+- Preserve every existing `dist/` version and its artifacts. V012 and earlier are finalized.
 - New version directories use numbered versions and English names.
 - Keep standalone HTML self-contained except for the user's local ROM; keep readable HTML/JavaScript, separate minimized JavaScript, exact byte counts, and tool versions.
 - Ordinary builds do not create `RELEASED.json`. Create it only when explicitly asked to finalize a version.

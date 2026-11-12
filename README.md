@@ -4,7 +4,7 @@ Tiny NES emulator in JS inspired by JSNES (https://github.com/bfirsh/jsnes + htt
 
 Demo: https://xem.github.io/jsnes-lite
 
-## Latest: V011
+## Latest finalized release: V011
 
 **Standalone emulator: [jsnes-lite.min.html](dist/v011-mapper30/jsnes-lite.min.html), 10,107 bytes.** Open it in a browser and select a local ROM.
 
@@ -16,6 +16,15 @@ Supports `.nes` and single-file LZMA1/LZMA2 `.7z`; no ZIP, CRC verification, or 
 - [Project guide and source-of-truth rules](PROJECT_GUIDE.md)
 - The root [`src/`](src/) and [`interfaces/`](interfaces/) directories are the editable source. V011's exact build snapshot is archived at `dist/v011-mapper30/source/`; edits there are not the starting point for future development.
 - [Build instructions](build-support/README.md) · [Local development history](build-support/LOCAL-HISTORY.md)
+
+## Current development: V012
+
+V012 is the finalized build that fixes OAM DMA alignment for `TCL王牌海战.nes` and the Side Pocket startup failure. The NMI fix tracks the PPU output edge and lets a nearby `$2002` read cancel a pending interrupt; its one-instruction delay approximates hardware timing. Its standalone HTML is 10,192 bytes.
+
+- [V012 standalone preview](dist/v012-oam-address-reset/jsnes-lite.min.html)
+- [V012 build notes](dist/v012-oam-address-reset/README.md)
+- [V012 fixes and verification](dist/v012-oam-address-reset/RELEASE_NOTES.md)
+- [V012 byte counts, hashes, and tool versions](dist/v012-oam-address-reset/sizes.json)
 
 ## Previous release: V010 极致运行版
 

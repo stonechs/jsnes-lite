@@ -16,6 +16,7 @@
 var
 cpu_mem,
 interrupt_requested,
+nmi_delay = -1,
 clk = 0,
 
 // Reset the CPU
@@ -24,6 +25,7 @@ cpu_reset = () => {
   // CPU internal memory (64KB)
   cpu_mem = [];
   clk = 0;
+  nmi_delay = -1;
 },
 
 // Clock 1 CPU cycle
@@ -38,6 +40,13 @@ cpu_tick = () => {
 
 // Emulates a single CPU instruction or interrupt, returns the number of cycles
 emulate = () => {
+
+  // Approximate the PPU-to-CPU NMI delay by one instruction, allowing a
+  // nearby $2002 read to cancel the pending edge.
+  if(nmi_delay === 0){
+    nmi_delay = -1;
+    if(!interrupt_requested) interrupt_requested = 1;
+  }else if(nmi_delay > 0) nmi_delay--;
 
   // Execute the requested interrupt, if any
   if(interrupt_requested){

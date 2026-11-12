@@ -10,11 +10,11 @@ JSNES lite 是一个用 JavaScript 编写的 NES 模拟器，源自 [xem/jsnes-l
 
 ## 当前状态
 
-- 当前最新版本为 V011，目录是 `dist/v011-mapper30/`。它包含 `RELEASED.json`，已经定版；不要覆盖或改写该目录。
+- 最新已定版版本为 V012，目录是 `dist/v012-oam-address-reset/`，已发布到 GitHub。它修正 PPU 精灵评估后的 OAMADDR 归零，并参考 JSNES 2.1.0 r14 的 NMI 输出边沿处理修正 `Side Pocket (U)` 的启动黑屏；独立压缩 HTML 为 10,192 字节。NMI 延迟为 CPU 指令级近似，不是逐点精确模拟。不要覆盖该目录。
 - V011 独立 HTML 为 10,107 字节。支持 iNES 1.0 Mapper 0–4 和 Mapper 30 UNROM-512 的 PRG/CHR-RAM 银行切换、非电池板卡总线冲突处理及低位单屏镜像；不模拟 Mapper 30 PRG 自闪存编程。
 - ROM 输入支持 `.nes` 和单文件 LZMA1/LZMA2 `.7z`。不支持 ZIP、CRC 校验或 DMC 音频。
-- V010 及更早版本也均有 `RELEASED.json`。目前 `dist/` 中所有版本都已经定版；任何后续版本必须使用新的未占用编号目录。
-- 根目录 `src/` 与 `interfaces/` 是后续开发的唯一可编辑源码入口。`dist/v011-mapper30/source/` 是 V011 的冻结构建输入快照，不是日常编辑位置；V011 的清单记录快照哈希，可用于核对历史构建输入。
+- V010 及更早版本也均有 `RELEASED.json`。V012 同样已定版；后续改动须使用新的未占用版本编号目录。
+- 根目录 `src/` 与 `interfaces/` 是后续开发的唯一可编辑源码入口。各版本 `dist/<version>/source/` 是对应版本的构建输入快照，不是日常编辑位置；版本清单记录快照哈希，可用于核对构建输入。
 
 ## 仓库结构
 
@@ -70,9 +70,9 @@ V011 的历史版本脚本位于 `build-support/` 根目录，保留原路径以
 
 历史构建步骤在 `build-support/README.md`、版本 README 及 `build-support/LOCAL-HISTORY.md`。后者按时间记录 v001 起的试验，部分旧命令描述的是当时的入口和布局，不应当作当前 V011 的构建说明。
 
-V012 起，新版本专用脚本放在 `build-support/versions/v012/`（后续版本同理），避免继续扩展根目录平铺的脚本列表。V011 的脚本目标目录已定版，不要直接复用来覆盖输出。
+V012 起，新版本专用脚本放在 `build-support/versions/v012/`（后续版本同理），避免继续扩展根目录平铺的脚本列表。V012 使用 `prepare.mjs`、`build.mjs`、`diagnose-tcl.cjs` 和 `diagnose-side-pocket.cjs`；它从根 `src/`、`interfaces/` 创建快照，并用 V011 Roadroller 参数打包，未运行 V012 参数搜索。V011 的脚本目标目录已定版，不要复用来覆盖输出。
 
-V011 及历史构建记录使用 Node.js v24.22.1、Closure Compiler 20261108.0.0、Roadroller 2.1.0 和 Base122 encoder revision `b62945c2733fa4da8792a1071e40a8b326e8dd1b`。实际运行环境可能不同，执行前可用 `node --version` 核对。构建脚本中的版本路径目前固定为已定版的 `dist/v011-mapper30/`，且会检测 `RELEASED.json` 并拒绝覆盖；新版本应先在 `build-support/` 中新增/调整专用入口和目标目录，再进行构建。
+V011 及历史构建记录使用 Node.js v24.22.1、Closure Compiler 20261108.0.0、Roadroller 2.1.0 和 Base122 encoder revision `b62945c2733fa4da8792a1071e40a8b326e8dd1b`。V012 使用相同工具版本，Roadroller 参数复用 V011 且未运行新搜索。实际运行环境可能不同，执行前可用 `node --version` 核对。V011 脚本路径固定到已定版目录并拒绝覆盖；后续版本应使用 `build-support/versions/vNNN/` 中的专用入口和新目标目录。
 
 ## 后续改动建议
 
@@ -93,3 +93,4 @@ V011 及历史构建记录使用 Node.js v24.22.1、Closure Compiler 20261108.0.
 - V011 包说明：[`dist/v011-mapper30/README.md`](dist/v011-mapper30/README.md)
 - V011 功能与限制：[`dist/v011-mapper30/RELEASE_NOTES.md`](dist/v011-mapper30/RELEASE_NOTES.md)
 - V011 文件大小、哈希和工具版本：[`dist/v011-mapper30/sizes.json`](dist/v011-mapper30/sizes.json)
+- V012 发布版：[`dist/v012-oam-address-reset/README.md`](dist/v012-oam-address-reset/README.md)

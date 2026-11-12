@@ -1,0 +1,17 @@
+{
+  "version": "V012",
+  "date": "2026-11-12",
+  "status": "finalized-do-not-overwrite",
+  "directory": "dist/v012-oam-address-reset",
+  "standalone": {
+    "file": "jsnes-lite.min.html",
+    "bytes": 10192,
+    "sha256": "3ec2e9cb7e0fd7126ab8ea8ac7a7e1e11d08683d2a83b6cc1a8afb36a7b9febd"
+  },
+  "tools": {
+    "node": "v24.22.1",
+    "closure": "20261108.0.0",
+    "roadroller": "2.1.0",
+    "base122": "b62945c2733fa4da8792a1071e40a8b326e8dd1b"
+  }
+}

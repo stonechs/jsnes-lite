@@ -109,6 +109,7 @@ PPUDATA_read_buffer,
 PPUSTATUS_O,
 PPUSTATUS_S,
 PPUSTATUS_V,
+PPU_NMI_OUTPUT,
 latch,
 PPUCTRL_V,
 PPUCTRL_H,
@@ -139,6 +140,7 @@ ppu_reset = () => {
   // Reset PPU memory (64KB) and OAM memory (256b)
   PPU_mem = [];
   OAM = [];
+  OAMADDR = 0;
   
   // Coordinates of the current pixel
   scanline =  // Y between 0 and 261 on NTSC (or 311 on PAL)
@@ -181,6 +183,7 @@ ppu_reset = () => {
   // PPU latch (also called w)
   // It's toggled between 0 and 1 every time PPUSCROLL or PPUADDR get written, and reset to 0 when PPUSTATUS is read
   latch = 0;
+  PPU_NMI_OUTPUT = 0;
 
   // Reset PPUCTRL and PPUMASK registers
   set_PPUCTRL(0);
@@ -230,6 +233,15 @@ ppu_read = address => {
 
 // TODO: move all this in memory.js
 
+// NMI is an edge on PPUCTRL.7 AND PPUSTATUS.7. A status read or a control
+// change can cancel an edge that has not yet reached the CPU.
+ppu_update_nmi = () => {
+  var output = PPUCTRL_V && PPUSTATUS_V;
+  if(output && !PPU_NMI_OUTPUT) nmi_delay = 1;
+  else if(!output && PPU_NMI_OUTPUT && nmi_delay >= 0) nmi_delay = -1;
+  PPU_NMI_OUTPUT = output;
+},
+
 // The CPU can read/write at the following addresses in memory to interact with the PPU
 
 // $2000 (write): set PPU Control Register 1 (PPUCTRL)
@@ -241,6 +253,7 @@ set_PPUCTRL = value => {
   PPUCTRL_S = (value >> 3) & 1;   // bit 3: sprite pattern table (0: $0000, 1: $1000, ignored in 8x16 mode)
   PPUCTRL_I = (value >> 2) & 1;   // bit 2: VRAM address increment after reading/writing in PPUDATA (0: 1, 1: 32)
   T_NN = value & 0b11;            // bits 0-1: update nametable bits in scroll register T
+  ppu_update_nmi();
 },
 
 // $2001 (write): set PPU Control Register 2 (PPUMASK)
@@ -268,6 +281,7 @@ get_PPUSTATUS = () => {
   
   // Reset VBlank
   PPUSTATUS_V = 0;
+  ppu_update_nmi();
 
   // Return status (without the resets)
   return t;
@@ -719,6 +733,8 @@ ppu_tick = () => {
     if(scanline < 240){
       drawBackgroundLine((scanline + scroll_y) % 480);
       drawScanline(scanline);
+      // Sprite evaluation resets OAMADDR for the next scanline on the NES.
+      if(PPUMASK_s || PPUMASK_b) OAMADDR = 0;
       
       // Update scroll
       scroll_x = (V_NN & 0b1) * 256 + V_XXXXX * 8 + xxx;
@@ -731,9 +747,7 @@ ppu_tick = () => {
       
       // VBlank flag
       PPUSTATUS_V = 1;
-      
-      // Send NMI interrupt to the CPU
-      interrupt_requested = 1;
+      ppu_update_nmi();
       
       // Output frameBuffer on canvas
       NES.frameData.data.set(NES.frameBuffer8);
@@ -747,6 +761,7 @@ ppu_tick = () => {
       PPUSTATUS_O =
       PPUSTATUS_S =
       PPUSTATUS_V = 0;
+      ppu_update_nmi();
     }
     
     // When the pre-render scanline is completed, a new frame starts
