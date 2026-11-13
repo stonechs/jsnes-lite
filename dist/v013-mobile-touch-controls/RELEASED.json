@@ -1,0 +1,17 @@
+{
+    "version":  "V013",
+    "date":  "2026-11-12",
+    "status":  "finalized-do-not-overwrite",
+    "directory":  "dist/v013-mobile-touch-controls",
+    "standalone":  {
+                       "file":  "jsnes-lite.min.html",
+                       "bytes":  11421,
+                       "sha256":  "f93678757db841f5a10415b24e133cf0676bca817d70250aeedbaca8bda072b5"
+                   },
+    "tools":  {
+                  "node":  "v24.22.1",
+                  "closure":  "20261108.0.0",
+                  "roadroller":  "2.1.0",
+                  "base122":  "b62945c2733fa4da8792a1071e40a8b326e8dd1b"
+              }
+}
