@@ -10,10 +10,11 @@ JSNES lite 是一个用 JavaScript 编写的 NES 模拟器，源自 [xem/jsnes-l
 
 ## 当前状态
 
-- 最新已定版版本为 V012，目录是 `dist/v012-oam-address-reset/`，已发布到 GitHub。它修正 PPU 精灵评估后的 OAMADDR 归零，并参考 JSNES 2.1.0 r14 的 NMI 输出边沿处理修正 `Side Pocket (U)` 的启动黑屏；独立压缩 HTML 为 10,192 字节。NMI 延迟为 CPU 指令级近似，不是逐点精确模拟。不要覆盖该目录。
+- 最新已定版版本为 V014，目录是 `dist/v014-community-roadroller-o2/`，已发布到 GitHub。V014 使用社区 Roadroller O2 和精简触控界面，A/B 纵向排列；独立压缩 HTML 为 10,879 字节。游戏画面/实体手机操控未实测；ROM 与 Mapper 限制见版本 README。不要覆盖该目录。
+- V013 手机触控版（11,421 字节）和 V012 OAM/NMI 修正版（10,192 字节）均保留在各自定版目录。V012 的 NMI 延迟仍是 CPU 指令级近似，不是逐点精确模拟。
 - V011 独立 HTML 为 10,107 字节。支持 iNES 1.0 Mapper 0–4 和 Mapper 30 UNROM-512 的 PRG/CHR-RAM 银行切换、非电池板卡总线冲突处理及低位单屏镜像；不模拟 Mapper 30 PRG 自闪存编程。
 - ROM 输入支持 `.nes` 和单文件 LZMA1/LZMA2 `.7z`。不支持 ZIP、CRC 校验或 DMC 音频。
-- V010 及更早版本也均有 `RELEASED.json`。V012 同样已定版；后续改动须使用新的未占用版本编号目录。
+- V010 及更早版本、V012–V014 均有 `RELEASED.json`；后续改动须使用新的未占用版本编号目录。
 - 根目录 `src/` 与 `interfaces/` 是后续开发的唯一可编辑源码入口。各版本 `dist/<version>/source/` 是对应版本的构建输入快照，不是日常编辑位置；版本清单记录快照哈希，可用于核对构建输入。
 
 ## 仓库结构

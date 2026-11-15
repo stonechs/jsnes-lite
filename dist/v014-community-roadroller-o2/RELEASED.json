@@ -1,0 +1,18 @@
+{
+  "version": "V014",
+  "date": "2026-11-15",
+  "status": "finalized-do-not-overwrite",
+  "directory": "dist/v014-community-roadroller-o2",
+  "standalone": {
+    "file": "jsnes-lite.min.html",
+    "bytes": 10879,
+    "sha256": "d8f6efcd9f63c646356d0d8f62940819547b5fe161d3f32e1f5790fad0c5b80f"
+  },
+  "tools": {
+    "node": "v26.13.1",
+    "closure": "20261108.0.0",
+    "roadroller": "da0ka/roadroller 64614b5fc6c7a97d75315c4d8c9ca407e6f233a3 (exe:0; O2)",
+    "base122": "b62945c2733fa4da8792a1071e40a8b326e8dd1b",
+    "lightningcss": "1.33.0 (UI CSS)"
+  }
+}

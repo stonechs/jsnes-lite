@@ -1,0 +1,165 @@
+/* 页面背景和默认外边距。 */
+body {
+  background: #555;
+  margin: 0
+}
+/* 横屏下排列画面和两侧手柄栏。 */
+.game {
+  grid-template-columns: 26vw minmax(0,1fr) 26vw;
+  gap: 2px;
+  height: 100dvh;
+  display: grid
+}
+/* 为横屏手柄内的绝对定位元素提供参照。 */
+.pad {
+  position: relative
+}
+/* 方向键组和 A/B 组大致放在手柄区域的上部。 */
+.dpad,.actions {
+  position: absolute;
+  top: 40%
+}
+/* 方向键的三乘三网格和靠画面一侧的位置。 */
+.dpad {
+  display: grid;
+  grid-template: repeat(3,1fr)/repeat(3,1fr);
+  right: 4px
+}
+/* A/B 按键纵向排列。 */
+.actions {
+  display: grid
+}
+/* 上方向键放在上方中间。 */
+.dpad>:first-child {
+  grid-area: 1/2
+}
+/* 左方向键放在中间左侧。 */
+.dpad>:nth-child(2) {
+  grid-area: 2/1
+}
+/* 右方向键放在中间右侧。 */
+.dpad>:nth-child(3) {
+  grid-area: 2/3
+}
+/* 下方向键放在左右键之间。 */
+.dpad>:nth-child(4) {
+  grid-area: 2/2
+}
+/* 通用触控行为和默认内边距。 */
+.touch {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  padding: 0
+}
+/* 方向键缩小到 54×54 像素。 */
+.dpad .touch {
+  width: 54px;
+  height: 54px
+}
+/* Select/Start 按键组靠近底部，并大致水平居中。 */
+.system {
+  gap: 8px;
+  display: flex;
+  position: absolute;
+  bottom: 0;
+  left: 30%
+}
+/* Select/Start 按键尺寸。 */
+.system .touch {
+  width: 36px;
+  height: 36px
+}
+/* A/B 按键尺寸。 */
+.actions .touch {
+  width: 88px;
+  height: 88px
+}
+/* ROM 选择、功能按钮和状态提示布局，内缩 4px。 */
+.tools {
+  justify-items: center;
+  gap: 4px;
+  display: grid;
+  position: absolute;
+  inset: 4px 4px auto
+}
+/* ROM 文件选择框宽度。 */
+.tools input {
+  width: 100%;
+  min-width: 0
+}
+/* 横向排列静音和全屏按钮。 */
+.tools nav {
+  gap: 6px;
+  display: flex
+}
+/* 功能按钮内边距。 */
+.tools nav button {
+  padding: 5px
+}
+/* 右侧说明文字左右内缩 4px。 */
+.right .side-note {
+  position: absolute;
+  inset: auto 4px
+}
+/* 右侧底部的 Mapper 说明。 */
+.right .side-note:last-child {
+  bottom: 4px
+}
+/* 游戏画布大小和顶部对齐方式。 */
+canvas {
+  place-self: start center;
+  width: 107dvh;
+  max-height: 100dvh
+}
+/* 竖屏下的页面和手柄布局规则。 */
+@media (orientation:portrait) {
+/* 竖屏页面至少铺满一屏，超出内容由页面滚动。 */
+  main {
+    min-height: 100dvh
+  }
+/* 竖屏时将画面放在上方、左右手柄放在下方。 */
+.game {
+    grid-template: "s s""l r"/1fr 1fr;
+    align-items: start;
+    gap: 12px 2px;
+    height: auto
+  }
+/* 竖屏画布放在上方并占满宽度。 */
+.game canvas {
+    grid-area: s;
+    width: 100%
+  }
+/* 竖屏布局里的左侧手柄区域。 */
+.left {
+    grid-area: l
+  }
+/* 竖屏布局里的右侧手柄区域。 */
+.right {
+    grid-area: r
+  }
+/* 竖屏时将手柄控件居中并纵向排列。 */
+.pad {
+    align-content: start;
+    justify-items: center;
+    gap: 10px;
+    display: grid
+  }
+/* 竖屏时取消绝对定位，恢复正常页面流。 */
+.dpad,.actions,.system,.tools,.right .side-note {
+    position: static
+  }
+/* Select/Start 按键组位置和排列。 */
+.system {
+    display: grid
+  }
+/* ROM 选择、功能按钮和状态提示布局。 */
+.tools {
+    width: 100%
+  }
+/* A/B 按键尺寸。 */
+.actions .touch {
+    width: 82px;
+    height: 82px
+  }
+}

@@ -1,0 +1,389 @@
+{
+  "version": "V014",
+  "status": "finalized",
+  "source": "V013 emulator snapshot plus simplified root mobile UI",
+  "tools": {
+    "node": "v26.13.1",
+    "closure": "20261108.0.0",
+    "roadroller": "da0ka/roadroller 64614b5fc6c7a97d75315c4d8c9ca407e6f233a3 (exe:0; O2)",
+    "lightningcss": "1.33.0 (UI CSS)",
+    "base122": "b62945c2733fa4da8792a1071e40a8b326e8dd1b"
+  },
+  "optimization": {
+    "level": 2,
+    "searchMs": 23725
+  },
+  "romIncluded": false,
+  "files": {
+    "build/base122.loader.min.js": {
+      "bytes": 968,
+      "KiB": 0.9453125,
+      "gzipBytes": 699,
+      "sha256": "f971d22c2458d378ad55381b5455f6867653b207697f521cefbcd3ed7b802c92"
+    },
+    "build/base122.loader.readable.js": {
+      "bytes": 1176,
+      "KiB": 1.1484375,
+      "gzipBytes": 771,
+      "sha256": "2e5c18249586294e6bbc42b03dd3ad7a2e0c1344ca4a5f20e3f9e09f9cb4e274"
+    },
+    "build/base122.min.html": {
+      "bytes": 10879,
+      "KiB": 10.6240234375,
+      "gzipBytes": 9871,
+      "sha256": "d8f6efcd9f63c646356d0d8f62940819547b5fe161d3f32e1f5790fad0c5b80f"
+    },
+    "build/base122.min.js": {
+      "bytes": 10844,
+      "KiB": 10.58984375,
+      "gzipBytes": 9839,
+      "sha256": "2c7f29b11491a1be16b687c56c9c2b8620ec93fbcae136553ed53270d55e0ac4"
+    },
+    "build/closure.externs.js": {
+      "bytes": 71,
+      "KiB": 0.0693359375,
+      "gzipBytes": 90,
+      "sha256": "02c1dbcf9af71b24df18fec614fe90fd52ee28cab0c2c0827bc7dd30b8772419"
+    },
+    "build/closure.input.js": {
+      "bytes": 100774,
+      "KiB": 98.412109375,
+      "gzipBytes": 28039,
+      "sha256": "7795e3a715d11035723a3e2a6755e997d2a47a324fd9e77f11c8f859ff0dc9d6"
+    },
+    "build/closure.min.html": {
+      "bytes": 21979,
+      "KiB": 21.4638671875,
+      "gzipBytes": 10575,
+      "sha256": "fcf5e2f78a9c05553a41c886e77cd12341a91f1e4d4c7b1107db85a8ea105408"
+    },
+    "build/closure.min.js": {
+      "bytes": 19179,
+      "KiB": 18.7294921875,
+      "gzipBytes": 9300,
+      "sha256": "afbe668ea0def90025e564530ae1bde8adf651b3aa8f7b2fab1efd90ea62b3ca"
+    },
+    "build/jsnes-lite.min.html": {
+      "bytes": 10879,
+      "KiB": 10.6240234375,
+      "gzipBytes": 9871,
+      "sha256": "d8f6efcd9f63c646356d0d8f62940819547b5fe161d3f32e1f5790fad0c5b80f"
+    },
+    "build/jsnes-lite.min.js": {
+      "bytes": 10844,
+      "KiB": 10.58984375,
+      "gzipBytes": 9839,
+      "sha256": "2c7f29b11491a1be16b687c56c9c2b8620ec93fbcae136553ed53270d55e0ac4"
+    },
+    "build/jsnes-lite.readable.html": {
+      "bytes": 103458,
+      "KiB": 101.033203125,
+      "gzipBytes": 29252,
+      "sha256": "6127f357f9bc8ea51e0ef499872280ede5984f164eaa74354e904cd3df90e332"
+    },
+    "build/jsnes-lite.readable.js": {
+      "bytes": 103522,
+      "KiB": 101.095703125,
+      "gzipBytes": 29275,
+      "sha256": "a8f883c4e84fbd62ba1be282a1277371f01ef01c7b894474f691d17973fb1f4d"
+    },
+    "build/roadroller-payload.bin": {
+      "bytes": 8658,
+      "KiB": 8.455078125,
+      "gzipBytes": 8681,
+      "sha256": "30fd35322712f969d5bad43fe14a8dfdeb6adb6735d30f32f7ea7fad94a602ed"
+    },
+    "build/roadroller.min.js": {
+      "bytes": 12222,
+      "KiB": 11.935546875,
+      "gzipBytes": 9411,
+      "sha256": "5a06707a31b84fc82b3f54625d2ac5abc9110aef2168fd8af4f3c9ce997f7833"
+    },
+    "jsnes-lite.min.html": {
+      "bytes": 10879,
+      "KiB": 10.6240234375,
+      "gzipBytes": 9871,
+      "sha256": "d8f6efcd9f63c646356d0d8f62940819547b5fe161d3f32e1f5790fad0c5b80f"
+    },
+    "jsnes-lite.readable.html": {
+      "bytes": 103458,
+      "KiB": 101.033203125,
+      "gzipBytes": 29252,
+      "sha256": "6127f357f9bc8ea51e0ef499872280ede5984f164eaa74354e904cd3df90e332"
+    },
+    "jsnes-lite.min.js": {
+      "bytes": 10844,
+      "KiB": 10.58984375,
+      "gzipBytes": 9839,
+      "sha256": "2c7f29b11491a1be16b687c56c9c2b8620ec93fbcae136553ed53270d55e0ac4"
+    },
+    "jsnes-lite.readable.js": {
+      "bytes": 103522,
+      "KiB": 101.095703125,
+      "gzipBytes": 29275,
+      "sha256": "a8f883c4e84fbd62ba1be282a1277371f01ef01c7b894474f691d17973fb1f4d"
+    }
+  },
+  "sourceFiles": [
+    {
+      "name": "source/6502.js",
+      "bytes": 29744,
+      "sha256": "b3816ced606e49e5a6a131e0f5d784678168a0ab952aa230b478c3d20a17ce40"
+    },
+    {
+      "name": "source/archive.js",
+      "bytes": 8801,
+      "sha256": "3051ff628ca436241e94036eb87e2de2a8ec74a590f2fe8adf7055fadff0a159"
+    },
+    {
+      "name": "source/controller.js",
+      "bytes": 1406,
+      "sha256": "28104f91aa51183d75c943af25ddcb5d648c8cfaea8445c4ac496378f8b407d9"
+    },
+    {
+      "name": "source/cpu.js",
+      "bytes": 1785,
+      "sha256": "eecbb2927f22e66b4802d63f5d71ff40941f47514e2d869e108dac99151628fb"
+    },
+    {
+      "name": "source/lzma-small.js",
+      "bytes": 3662,
+      "sha256": "95caebce44efc9466c90e67ef9151b0e5b5eba315b0e11cb8cb577723ef48c53"
+    },
+    {
+      "name": "source/mappers.js",
+      "bytes": 6548,
+      "sha256": "16af5576abf61fed0954aa5f2cd3cddf144bb8271c96cb82adb4ef99f29c92e4"
+    },
+    {
+      "name": "source/memory.js",
+      "bytes": 9491,
+      "sha256": "f840437facceefe7f96c098bc4739a74ca6818262a47f026615b34b9fe216c5d"
+    },
+    {
+      "name": "source/nes.js",
+      "bytes": 3376,
+      "sha256": "b1e0233a2f2d72c606ca26f2496154b88a5b7df69ab02bb636c72109a3b62415"
+    },
+    {
+      "name": "source/papu.js",
+      "bytes": 5954,
+      "sha256": "f1f05063c2daa4914acd738d7dc54af80eca8148f8ff2bf18ab936d55d818cc7"
+    },
+    {
+      "name": "source/ppu.js",
+      "bytes": 29106,
+      "sha256": "de1d17e7b5c33551f849ada7725d454098753c36b588fcbd1f624cadbe2b508f"
+    },
+    {
+      "name": "source/rom.js",
+      "bytes": 933,
+      "sha256": "b7332b7209c3ae3800cc8d4c730fd8e378c164717b03573c93de28886be334da"
+    },
+    {
+      "name": "source/ui.html",
+      "bytes": 2780,
+      "sha256": "3907b95d7006bfade3cb41df5fb603d671ea2a7a0df4de0c0736f8b7800ead1e"
+    },
+    {
+      "name": "source/ui.js",
+      "bytes": 3484,
+      "sha256": "33f07086126f3f411d4c913afb996588a70ce92502e3d1f926970c2e760549bd"
+    }
+  ],
+  "packageFiles": {
+    "build/base122.compiler.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "build/base122.loader.min.js": {
+      "bytes": 968,
+      "sha256": "f971d22c2458d378ad55381b5455f6867653b207697f521cefbcd3ed7b802c92"
+    },
+    "build/base122.loader.readable.js": {
+      "bytes": 1176,
+      "sha256": "2e5c18249586294e6bbc42b03dd3ad7a2e0c1344ca4a5f20e3f9e09f9cb4e274"
+    },
+    "build/base122.min.html": {
+      "bytes": 10879,
+      "sha256": "d8f6efcd9f63c646356d0d8f62940819547b5fe161d3f32e1f5790fad0c5b80f"
+    },
+    "build/base122.min.js": {
+      "bytes": 10844,
+      "sha256": "2c7f29b11491a1be16b687c56c9c2b8620ec93fbcae136553ed53270d55e0ac4"
+    },
+    "build/closure.compiler.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "build/closure.externs.js": {
+      "bytes": 71,
+      "sha256": "02c1dbcf9af71b24df18fec614fe90fd52ee28cab0c2c0827bc7dd30b8772419"
+    },
+    "build/closure.input.js": {
+      "bytes": 100774,
+      "sha256": "7795e3a715d11035723a3e2a6755e997d2a47a324fd9e77f11c8f859ff0dc9d6"
+    },
+    "build/closure.min.html": {
+      "bytes": 21979,
+      "sha256": "fcf5e2f78a9c05553a41c886e77cd12341a91f1e4d4c7b1107db85a8ea105408"
+    },
+    "build/closure.min.js": {
+      "bytes": 19179,
+      "sha256": "afbe668ea0def90025e564530ae1bde8adf651b3aa8f7b2fab1efd90ea62b3ca"
+    },
+    "build/closure.pass2.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "build/jsnes-lite.min.html": {
+      "bytes": 10879,
+      "sha256": "d8f6efcd9f63c646356d0d8f62940819547b5fe161d3f32e1f5790fad0c5b80f"
+    },
+    "build/jsnes-lite.min.html.gz": {
+      "bytes": 9871,
+      "sha256": "e36ad23acb9b220dcbacc63943a5aa1d27a0299d0b283c3960b4df7997886832"
+    },
+    "build/jsnes-lite.min.js": {
+      "bytes": 10844,
+      "sha256": "2c7f29b11491a1be16b687c56c9c2b8620ec93fbcae136553ed53270d55e0ac4"
+    },
+    "build/jsnes-lite.readable.html": {
+      "bytes": 103458,
+      "sha256": "6127f357f9bc8ea51e0ef499872280ede5984f164eaa74354e904cd3df90e332"
+    },
+    "build/jsnes-lite.readable.js": {
+      "bytes": 103522,
+      "sha256": "a8f883c4e84fbd62ba1be282a1277371f01ef01c7b894474f691d17973fb1f4d"
+    },
+    "build/roadroller-payload.bin": {
+      "bytes": 8658,
+      "sha256": "30fd35322712f969d5bad43fe14a8dfdeb6adb6735d30f32f7ea7fad94a602ed"
+    },
+    "build/roadroller.min.js": {
+      "bytes": 12222,
+      "sha256": "5a06707a31b84fc82b3f54625d2ac5abc9110aef2168fd8af4f3c9ce997f7833"
+    },
+    "build/roadroller.parameters.json": {
+      "bytes": 560,
+      "sha256": "d2372c471c6d7c65ea8efa9485ad6cfeb19cce25ca471834536c82be3d310958"
+    },
+    "jsnes-lite.min.html": {
+      "bytes": 10879,
+      "sha256": "d8f6efcd9f63c646356d0d8f62940819547b5fe161d3f32e1f5790fad0c5b80f"
+    },
+    "jsnes-lite.min.js": {
+      "bytes": 10844,
+      "sha256": "2c7f29b11491a1be16b687c56c9c2b8620ec93fbcae136553ed53270d55e0ac4"
+    },
+    "jsnes-lite.readable.html": {
+      "bytes": 103458,
+      "sha256": "6127f357f9bc8ea51e0ef499872280ede5984f164eaa74354e904cd3df90e332"
+    },
+    "jsnes-lite.readable.js": {
+      "bytes": 103522,
+      "sha256": "a8f883c4e84fbd62ba1be282a1277371f01ef01c7b894474f691d17973fb1f4d"
+    },
+    "licenses/LICENSE-JSNES.txt": {
+      "bytes": 10949,
+      "sha256": "2cbcc2056aa90a60c968327399fa51ff0f30d7078265b9f4bb49424674bd3fdd"
+    },
+    "licenses/THIRD_PARTY_NOTICES.md": {
+      "bytes": 2471,
+      "sha256": "30e77785a3ffea4a9668c41f78dd927c44014d41935b119eac6a0530cd855640"
+    },
+    "README.md": {
+      "bytes": 1881,
+      "sha256": "73cc9dbb185d3fa66b6793e242a4982df48de886a0dc31ed6f4b95a27150675c"
+    },
+    "RELEASE_NOTES.md": {
+      "bytes": 1189,
+      "sha256": "fa9cb70bdb40e916b2f5a49d0bd63a93d72bff3dd3206b8983d797ca221c1b1f"
+    },
+    "search/initial-options.json": {
+      "bytes": 567,
+      "sha256": "e5cb4df83cb87d44c00d227a74484f430896d1b5a223bdefbe62f543f79d059d"
+    },
+    "search/winner.json": {
+      "bytes": 567,
+      "sha256": "c52abab70a55242dd223f310dc4d4cde5dc63a1347809f4c8ad2b44ce72cdb4e"
+    },
+    "source/6502.js": {
+      "bytes": 29744,
+      "sha256": "b3816ced606e49e5a6a131e0f5d784678168a0ab952aa230b478c3d20a17ce40"
+    },
+    "source/archive.js": {
+      "bytes": 8801,
+      "sha256": "3051ff628ca436241e94036eb87e2de2a8ec74a590f2fe8adf7055fadff0a159"
+    },
+    "source/controller.js": {
+      "bytes": 1406,
+      "sha256": "28104f91aa51183d75c943af25ddcb5d648c8cfaea8445c4ac496378f8b407d9"
+    },
+    "source/cpu.js": {
+      "bytes": 1785,
+      "sha256": "eecbb2927f22e66b4802d63f5d71ff40941f47514e2d869e108dac99151628fb"
+    },
+    "source/lzma-small.js": {
+      "bytes": 3662,
+      "sha256": "95caebce44efc9466c90e67ef9151b0e5b5eba315b0e11cb8cb577723ef48c53"
+    },
+    "source/mappers.js": {
+      "bytes": 6548,
+      "sha256": "16af5576abf61fed0954aa5f2cd3cddf144bb8271c96cb82adb4ef99f29c92e4"
+    },
+    "source/memory.js": {
+      "bytes": 9491,
+      "sha256": "f840437facceefe7f96c098bc4739a74ca6818262a47f026615b34b9fe216c5d"
+    },
+    "source/nes.js": {
+      "bytes": 3376,
+      "sha256": "b1e0233a2f2d72c606ca26f2496154b88a5b7df69ab02bb636c72109a3b62415"
+    },
+    "source/papu.js": {
+      "bytes": 5954,
+      "sha256": "f1f05063c2daa4914acd738d7dc54af80eca8148f8ff2bf18ab936d55d818cc7"
+    },
+    "source/ppu.js": {
+      "bytes": 29106,
+      "sha256": "de1d17e7b5c33551f849ada7725d454098753c36b588fcbd1f624cadbe2b508f"
+    },
+    "source/rom.js": {
+      "bytes": 933,
+      "sha256": "b7332b7209c3ae3800cc8d4c730fd8e378c164717b03573c93de28886be334da"
+    },
+    "source/ui.html": {
+      "bytes": 2780,
+      "sha256": "3907b95d7006bfade3cb41df5fb603d671ea2a7a0df4de0c0736f8b7800ead1e"
+    },
+    "source/ui.js": {
+      "bytes": 3484,
+      "sha256": "33f07086126f3f411d4c913afb996588a70ce92502e3d1f926970c2e760549bd"
+    },
+    "tools/roadroller-fast/deflate.js": {
+      "bytes": 10365,
+      "sha256": "0b9cba16bcf5cead26ff8df38ca58ff0ce9c36cc760a12b4c13b5c10e5b0eb41"
+    },
+    "tools/roadroller-fast/index.js": {
+      "bytes": 50527,
+      "sha256": "fe01470c6a30cbf747bef9b32ea1fc0f8cba1c28ba80ac68353786d5ac956cbf"
+    },
+    "tools/roadroller-fast/js-token.js": {
+      "bytes": 8504,
+      "sha256": "d563e11d55349ed91b81663fbb1ca4ecc6ec883aff99c8def311e690b2b98695"
+    },
+    "tools/roadroller-fast/LICENSE.txt": {
+      "bytes": 1192,
+      "sha256": "58404cb001200e562e9251fc93a7a356c9506c0e222f2989c87984cabad45b56"
+    },
+    "tools/roadroller-fast/README.md": {
+      "bytes": 394,
+      "sha256": "54cc9cf75ced5dcc4ecf8909ffa1ae2bddf26a4621671678def9506260a68b6d"
+    },
+    "tools/roadroller-fast/wasm.js": {
+      "bytes": 21666,
+      "sha256": "44dfe9ddea751e6005386350aed64924d11996c578612d79d0d8949e5fd1d79c"
+    }
+  },
+  "roadrollerForkReadme": "Vendored from https://github.com/da0ka/roadroller at commit `64614b5fc6c7a97d75315c4d8c9ca407e6f233a3`.\n\nThe build uses its `exe: 0` small decoder mode with six contexts for the optional `.speed.html` output. The fork describes this decoder as smaller and faster than its `zippable` mode. Its upstream license is included in `LICENSE.txt`; decoder code produced by Roadroller is public domain."
+}

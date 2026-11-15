@@ -4,32 +4,25 @@ Tiny NES emulator in JS inspired by JSNES (https://github.com/bfirsh/jsnes + htt
 
 Demo: https://xem.github.io/jsnes-lite
 
-## Latest finalized release: V013
+## Latest finalized release: V014
 
-**Standalone emulator: [jsnes-lite.min.html](dist/v013-mobile-touch-controls/jsnes-lite.min.html), 11,421 bytes.** Open it in a browser, choose a local ROM, and use the touch controls or keyboard.
+**Standalone emulator: [jsnes-lite.min.html](dist/v014-community-roadroller-o2/jsnes-lite.min.html), 10,879 bytes.** Open it in a browser, choose a local ROM, and use the touch controls or keyboard.
 
-V013 adds a four-way touch pad, Select, Start, A, and B around the game screen, with simultaneous touch input. In landscape, the screen aligns to the top and the controls sit beside it without overlap. It retains V012's Mapper 0–4 and Mapper 30 UNROM-512 support. `.7z` is limited to single-file LZMA1/LZMA2; ZIP, CRC verification, Mapper 30 self-flash programming, and DMC audio are unsupported.
+V014 uses the community Roadroller O2 build and a compact touch interface. A/B are stacked vertically; the landscape side columns use 26vw and the canvas width uses 107dvh without clamps. It retains V013's emulator and ROM support: `.nes` and single-file LZMA1/LZMA2 `.7z`, Mapper 0–4 and Mapper 30 UNROM-512. ZIP, CRC verification, Mapper 30 self-flash programming, and DMC audio are unsupported. Browser gameplay and physical-phone touch controls were not tested.
 
-- [V013 build notes](dist/v013-mobile-touch-controls/README.md)
-- [V013 release notes](dist/v013-mobile-touch-controls/RELEASE_NOTES.md)
-- [V013 byte counts, hashes, and tool versions](dist/v013-mobile-touch-controls/sizes.json)
-- [V013 finalization record](dist/v013-mobile-touch-controls/RELEASED.json)
+- [V014 build notes](dist/v014-community-roadroller-o2/README.md)
+- [V014 release notes](dist/v014-community-roadroller-o2/RELEASE_NOTES.md)
+- [V014 byte counts, hashes, and tool versions](dist/v014-community-roadroller-o2/sizes.json)
+- [V014 finalization record](dist/v014-community-roadroller-o2/RELEASED.json)
+- Root `src/` and `interfaces/` are the editable source. V014's build snapshot is archived at `dist/v014-community-roadroller-o2/source/`.
 - [Project guide and source-of-truth rules](PROJECT_GUIDE.md)
-- Root `src/` and `interfaces/` are the editable source. V013's exact build snapshot is archived at `dist/v013-mobile-touch-controls/source/`.
 - [Build instructions](build-support/README.md) · [Local development history](build-support/LOCAL-HISTORY.md)
+
+## Previous release: V013
+
+V013 introduced the four-way touch pad, Select, Start, A, and B controls around the game screen, with simultaneous touch input. [Standalone HTML](dist/v013-mobile-touch-controls/jsnes-lite.min.html) is 11,421 bytes. See the [build notes](dist/v013-mobile-touch-controls/README.md), [release notes](dist/v013-mobile-touch-controls/RELEASE_NOTES.md), [size metadata](dist/v013-mobile-touch-controls/sizes.json), and [finalization record](dist/v013-mobile-touch-controls/RELEASED.json).
 
 ## Previous release: V012
-
-**Standalone emulator: [jsnes-lite.min.html](dist/v011-mapper30/jsnes-lite.min.html), 10,107 bytes.** Open it in a browser and select a local ROM.
-
-Supports `.nes` and single-file LZMA1/LZMA2 `.7z`; no ZIP, CRC verification, or DMC. It has four-channel audio, Mapper 0 through 4 and Mapper 30 UNROM-512 banking, one controller, fullscreen, and mute. Mapper 30 self-flash programming is not emulated.
-
-- [V011 build notes](dist/v011-mapper30/README.md)
-- [V011 release notes](dist/v011-mapper30/RELEASE_NOTES.md)
-- [V011 byte counts, hashes, and tool versions](dist/v011-mapper30/sizes.json)
-- [Project guide and source-of-truth rules](PROJECT_GUIDE.md)
-- The root [`src/`](src/) and [`interfaces/`](interfaces/) directories are the editable source. V011's exact build snapshot is archived at `dist/v011-mapper30/source/`; edits there are not the starting point for future development.
-- [Build instructions](build-support/README.md) · [Local development history](build-support/LOCAL-HISTORY.md)
 
 V012 fixes OAM DMA alignment for `TCL王牌海战.nes` and the Side Pocket startup failure. Its NMI fix tracks the PPU output edge and lets a nearby `$2002` read cancel a pending interrupt; the one-instruction delay approximates hardware timing. Its standalone HTML is 10,192 bytes.
 
