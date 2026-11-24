@@ -4,19 +4,29 @@ Tiny NES emulator in JS inspired by JSNES (https://github.com/bfirsh/jsnes + htt
 
 Demo: https://xem.github.io/jsnes-lite
 
-## Latest finalized release: V016
+## Latest finalized release: V017
 
-**Standalone emulator: [jsnes-lite.min.html](dist/v016-lzmad-frame-scheduler/jsnes-lite.min.html), 10,863 bytes.** Open it in a browser, choose a local `.nes` or supported `.7z` ROM, and use the touch controls or keyboard.
+**Standalone emulator: [jsnes-lite.min.html](dist/v017-landscape-control-insets/jsnes-lite.min.html), 10,862 bytes.** Open it in a browser, choose a local `.nes` or supported `.7z` ROM, and use the touch controls or keyboard.
 
-V016 restores the accumulated frame-deadline scheduler from V015-5 and retains LZMA1/LZMA2 archive support and its landscape touch layout. It supports iNES 1.0 Mapper 0–4 and Mapper 30 UNROM-512; ZIP, CRC verification, Mapper 30 self-flash programming, and DMC audio are unsupported. Regression vectors passed; browser gameplay and physical-phone touch controls were not tested.
+V017 places the landscape directional pad 32 px from the right edge of the left control column and A/B 32 px from the left edge of the right control column. Portrait layout remains unchanged. V016 frame scheduling and LZMA1/LZMA2 support remain. Mapper 0–4 and Mapper 30 UNROM-512 are supported; ZIP, CRC verification, Mapper 30 self-flash programming, and DMC audio are unsupported. Regression vectors and VM checks passed; browser gameplay and physical-phone visual controls were not tested.
 
-- [V016 build notes](dist/v016-lzmad-frame-scheduler/README.md)
-- [V016 release notes](dist/v016-lzmad-frame-scheduler/RELEASE_NOTES.md)
-- [V016 byte counts, hashes, and tool versions](dist/v016-lzmad-frame-scheduler/sizes.json)
-- [V016 finalization record](dist/v016-lzmad-frame-scheduler/RELEASED.json)
-- Root `src/` and `interfaces/` are the editable source. V016's build snapshot is archived at `dist/v016-lzmad-frame-scheduler/source/`.
+- [V017 build notes](dist/v017-landscape-control-insets/README.md)
+- [V017 release notes](dist/v017-landscape-control-insets/RELEASE_NOTES.md)
+- [V017 byte counts, hashes, and tool versions](dist/v017-landscape-control-insets/sizes.json)
+- [V017 finalization record](dist/v017-landscape-control-insets/RELEASED.json)
+- Root `src/` and `interfaces/` are the editable source. V017's build snapshot is archived at `dist/v017-landscape-control-insets/source/`.
 - [Project guide and source-of-truth rules](PROJECT_GUIDE.md)
 - [Build instructions](build-support/README.md) · [Local development history](build-support/LOCAL-HISTORY.md)
+
+## Previous release: V016
+
+V016 restored the accumulated frame-deadline scheduler and retained LZMA1/LZMA2 archive support. Its standalone HTML is 10,863 bytes.
+
+- [V016 standalone](dist/v016-lzmad-frame-scheduler/jsnes-lite.min.html)
+- [V016 build notes](dist/v016-lzmad-frame-scheduler/README.md)
+- [V016 release notes](dist/v016-lzmad-frame-scheduler/RELEASE_NOTES.md)
+- [V016 byte counts and hashes](dist/v016-lzmad-frame-scheduler/sizes.json)
+- [V016 finalization record](dist/v016-lzmad-frame-scheduler/RELEASED.json)
 
 ## Previous release: V014
 

@@ -1,0 +1,17 @@
+{
+  "version": "V017",
+  "date": "2026-11-24",
+  "status": "finalized-do-not-overwrite",
+  "directory": "dist/v017-landscape-control-insets",
+  "standalone": {
+    "file": "jsnes-lite.min.html",
+    "bytes": 10862,
+    "sha256": "c8df7885769241af1d86679e36ab4a67bfeff6c0dfdbafd781acb6f79f36c263"
+  },
+  "tools": {
+    "node": "v26.13.1",
+    "closure": "20261108.0.0",
+    "roadroller": "da0ka/roadroller 64614b5fc6c7a97d75315c4d8c9ca407e6f233a3 (exe:0; O2)",
+    "base122": "project build-support/packaging/base122.mjs"
+  }
+}
