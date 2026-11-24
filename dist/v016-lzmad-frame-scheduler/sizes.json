@@ -1,0 +1,75 @@
+{
+  "version": "V016",
+  "status": "unfinalized",
+  "settings": {
+    "applicationClosurePasses": 2,
+    "closureCompiler": "20261108.0.0",
+    "roadroller": "da0ka community fork at 64614b5fc6c7a97d75315c4d8c9ca407e6f233a3",
+    "roadrollerLevel": 2,
+    "roadrollerExe": 0,
+    "base122": true,
+    "sameInitialRoadrollerOptions": true
+  },
+  "tools": {
+    "node": "v26.13.1",
+    "closure": "20261108.0.0",
+    "roadroller": "da0ka/roadroller 64614b5fc6c7a97d75315c4d8c9ca407e6f233a3 (O2; exe:0)"
+  },
+  "comparison": {
+    "readableSourceBytesDelta": 229,
+    "nesSourceBytesDelta": 229,
+    "closureBytesDelta": 85,
+    "roadrollerBytesDelta": 50,
+    "finalHtmlBytesDelta": 43
+  },
+  "files": {
+    "candidate/jsnes-lite.min.html": {
+      "bytes": 10863,
+      "sha256": "8353272b52f6dc47bf2f665f593a95bc331ee5ab2d24741c3a502fade00c7139"
+    },
+    "candidate/jsnes-lite.min.js": {
+      "bytes": 10828,
+      "sha256": "90845b7e9d703c23af6809d04ba5d583dea15b1a596d93086461e60ae7816f3d"
+    },
+    "candidate/jsnes-lite.readable.html": {
+      "bytes": 101994,
+      "sha256": "a38b72bd7f370f0450555caf93b246c5f9d2d6c28ea97b4561bd906fb73b8224"
+    },
+    "candidate/jsnes-lite.readable.js": {
+      "bytes": 102058,
+      "sha256": "1d61169f9550d44232ef8f47ba9355b3fd11764d4a23f53d1e5c7a80207f435b"
+    },
+    "baseline/jsnes-lite.min.html": {
+      "bytes": 10820,
+      "sha256": "26ea35f97265f0cd790e3d10586b49406795bf2809c4f9c561d3179254610a7c"
+    },
+    "baseline/jsnes-lite.min.js": {
+      "bytes": 10785,
+      "sha256": "419c2c5c12a7d79a8e590a584b8335aba35c6cf394df01f6b0a4144f765462e0"
+    },
+    "baseline/jsnes-lite.readable.html": {
+      "bytes": 101765,
+      "sha256": "0143006fdae446061403f033e61ad4aa38638b686ed1752583a1ab2da6c32a46"
+    },
+    "baseline/jsnes-lite.readable.js": {
+      "bytes": 101829,
+      "sha256": "990914175f7bde468aafbf08c60314b6869d534ff7a7cd8ec04eeb4e79b94968"
+    },
+    "closure/baseline.js": {
+      "bytes": 19101,
+      "sha256": "3043fbe3f3d475551a55447f9ac9574cb390a97dc3c1f4eb48cc24ed75938446"
+    },
+    "closure/candidate.js": {
+      "bytes": 19186,
+      "sha256": "38998cce90396784ea97792922d9e30793621e45cb3d15e12b44048714d176e8"
+    },
+    "source-baseline/nes.js": {
+      "bytes": 3147,
+      "sha256": "69746cd3fa24b05d0a857fd82bebf89dcca17a792effac32f328f193cf0661dc"
+    },
+    "source-candidate/nes.js": {
+      "bytes": 3376,
+      "sha256": "b1e0233a2f2d72c606ca26f2496154b88a5b7df69ab02bb636c72109a3b62415"
+    }
+  }
+}

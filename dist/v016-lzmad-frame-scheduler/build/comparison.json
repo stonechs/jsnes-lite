@@ -1,0 +1,54 @@
+{
+  "version": "V016",
+  "status": "unfinalized build",
+  "scope": "V015-6 callback-entry timer versus the V015-5 deadline-based frame scheduler restored in V016",
+  "settings": {
+    "applicationClosurePasses": 2,
+    "closureCompiler": "20261108.0.0",
+    "roadroller": "da0ka community fork at 64614b5fc6c7a97d75315c4d8c9ca407e6f233a3",
+    "roadrollerLevel": 2,
+    "roadrollerExe": 0,
+    "base122": true,
+    "sameInitialRoadrollerOptions": true
+  },
+  "baseline": {
+    "sourceBytes": 98960,
+    "closureBytes": 19101,
+    "pass1Bytes": 19121,
+    "pass2Bytes": 19101,
+    "selectedPass": 2,
+    "roadrollerBytes": 12151,
+    "finalJsBytes": 10785,
+    "finalHtmlBytes": 10820,
+    "searchMs": 24435,
+    "bestSize": 12201,
+    "loaderBytes": 968,
+    "payloadBytes": 9836
+  },
+  "candidate": {
+    "sourceBytes": 99189,
+    "closureBytes": 19186,
+    "pass1Bytes": 19206,
+    "pass2Bytes": 19186,
+    "selectedPass": 2,
+    "roadrollerBytes": 12201,
+    "finalJsBytes": 10828,
+    "finalHtmlBytes": 10863,
+    "searchMs": 25518,
+    "bestSize": 12201,
+    "loaderBytes": 968,
+    "payloadBytes": 9879
+  },
+  "comparison": {
+    "readableSourceBytesDelta": 229,
+    "nesSourceBytesDelta": 229,
+    "closureBytesDelta": 85,
+    "roadrollerBytesDelta": 50,
+    "finalHtmlBytesDelta": 43
+  },
+  "tools": {
+    "node": "v26.13.1",
+    "closure": "20261108.0.0",
+    "roadroller": "da0ka/roadroller 64614b5fc6c7a97d75315c4d8c9ca407e6f233a3 (O2; exe:0)"
+  }
+}
