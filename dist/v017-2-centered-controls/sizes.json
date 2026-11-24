@@ -1,6 +1,6 @@
 {
   "version": "V017-2",
-  "status": "unfinalized",
+  "status": "finalized-do-not-overwrite",
   "settings": {
     "applicationClosurePasses": 2,
     "closureCompiler": "20261108.0.0",

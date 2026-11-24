@@ -4,19 +4,29 @@ Tiny NES emulator in JS inspired by JSNES (https://github.com/bfirsh/jsnes + htt
 
 Demo: https://xem.github.io/jsnes-lite
 
-## Latest finalized release: V017
+## Latest finalized release: V017-2
 
-**Standalone emulator: [jsnes-lite.min.html](dist/v017-landscape-control-insets/jsnes-lite.min.html), 10,862 bytes.** Open it in a browser, choose a local `.nes` or supported `.7z` ROM, and use the touch controls or keyboard.
+**Standalone emulator: [jsnes-lite.min.html](dist/v017-2-centered-controls/jsnes-lite.min.html), 10,884 bytes.** Open it in a browser, choose a local `.nes` or supported `.7z` ROM, and use the touch controls or keyboard.
 
-V017 places the landscape directional pad 32 px from the right edge of the left control column and A/B 32 px from the left edge of the right control column. Portrait layout remains unchanged. V016 frame scheduling and LZMA1/LZMA2 support remain. Mapper 0–4 and Mapper 30 UNROM-512 are supported; ZIP, CRC verification, Mapper 30 self-flash programming, and DMC audio are unsupported. Regression vectors and VM checks passed; browser gameplay and physical-phone visual controls were not tested.
+V017-2 centers the landscape directional pad in the left control column and A/B in the right control column. The center column matches the canvas width, and the side columns share the remaining space equally. Portrait layout is unchanged. V017 frame scheduling and LZMA1/LZMA2 support remain. Mapper 0–4 and Mapper 30 UNROM-512 are supported; ZIP, CRC verification, Mapper 30 self-flash programming, and DMC audio are unsupported. Regression and VM layout checks passed; browser gameplay and physical-phone visuals were not tested.
 
-- [V017 build notes](dist/v017-landscape-control-insets/README.md)
-- [V017 release notes](dist/v017-landscape-control-insets/RELEASE_NOTES.md)
-- [V017 byte counts, hashes, and tool versions](dist/v017-landscape-control-insets/sizes.json)
-- [V017 finalization record](dist/v017-landscape-control-insets/RELEASED.json)
-- Root `src/` and `interfaces/` are the editable source. V017's build snapshot is archived at `dist/v017-landscape-control-insets/source/`.
+- [V017-2 build notes](dist/v017-2-centered-controls/README.md)
+- [V017-2 release notes](dist/v017-2-centered-controls/RELEASE_NOTES.md)
+- [V017-2 byte counts, hashes, and tool versions](dist/v017-2-centered-controls/sizes.json)
+- [V017-2 finalization record](dist/v017-2-centered-controls/RELEASED.json)
+- Root `src/` and `interfaces/` are the editable source. V017-2's source snapshot is archived at `dist/v017-2-centered-controls/source/`.
 - [Project guide and source-of-truth rules](PROJECT_GUIDE.md)
 - [Build instructions](build-support/README.md) · [Local development history](build-support/LOCAL-HISTORY.md)
+
+## Previous release: V017
+
+V017 moved the landscape touch controls 32 px inward from their side-column edges. Its standalone HTML is 10,862 bytes.
+
+- [V017 standalone](dist/v017-landscape-control-insets/jsnes-lite.min.html)
+- [V017 build notes](dist/v017-landscape-control-insets/README.md)
+- [V017 release notes](dist/v017-landscape-control-insets/RELEASE_NOTES.md)
+- [V017 byte counts and hashes](dist/v017-landscape-control-insets/sizes.json)
+- [V017 finalization record](dist/v017-landscape-control-insets/RELEASED.json)
 
 ## Previous release: V016
 

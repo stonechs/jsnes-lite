@@ -8,14 +8,8 @@ The standalone HTML is **10,884 bytes**, 25 bytes larger than V017-1. SHA-256: `
 
 Tools: Node.js v26.13.1; Closure Compiler 20261108.0.0 (two ADVANCED passes); da0ka Roadroller community fork commit `64614b5fc6c7a97d75315c4d8c9ca407e6f233a3` (O2, exe 0). See `sizes.json` for all artifact sizes and hashes.
 
-Build from the repository root:
-
-```powershell
-node build-support/versions/v017-2-centered-controls/build.mjs all
-```
-
-The build compares against V017-1 and reuses its saved Roadroller O2 parameters. This is an unfinalized small-version build.
-
 ## Support and verification
 
 V017-2 retains `.nes` and single-file LZMA1/LZMA2 `.7z` support. Layout assertions, standalone VM loading, 25 LZMA1 stream vectors, a synthetic LZMA1 archive, and two synthetic LZMA2 archives passed. Browser gameplay, actual ROM loading, and physical-phone visual controls were not tested.
+
+V017-2 is finalized and published as [GitHub Release v017-2](https://github.com/stonechs/jsnes-lite/releases/tag/v017-2).
