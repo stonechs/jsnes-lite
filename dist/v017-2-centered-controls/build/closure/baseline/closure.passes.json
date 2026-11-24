@@ -1,0 +1,8 @@
+{
+  "passes": 2,
+  "pass1Bytes": 19206,
+  "pass2Bytes": 19186,
+  "selectedPass": 2,
+  "selectedBytes": 19186,
+  "extraClosureAdvancedForBase122Loader": true
+}

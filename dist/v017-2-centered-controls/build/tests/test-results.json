@@ -1,0 +1,26 @@
+{
+  "standalone": "V017-2 Base122 + Roadroller O2 loaded",
+  "layout": "center matches canvas; side columns share remaining width",
+  "controlLayout": "directional pad and A/B centered in side columns",
+  "portraitLayout": "unchanged",
+  "lzma1StreamVectors": 25,
+  "syntheticLzma1ArchiveBytes": 506,
+  "syntheticLzma1OutputBytes": 16400,
+  "syntheticLzma2Archives": [
+    {
+      "file": "synthetic-lzma2.7z",
+      "expectedBytes": 3145744,
+      "sha256": "3acaa4a46bf81ed93a8903ecbbe58f90e6f39b5d04fedbee3ec6d2c229ffa2c8",
+      "actualBytes": 3145744,
+      "exact": true
+    },
+    {
+      "file": "synthetic-lzma2-raw.7z",
+      "expectedBytes": 1048592,
+      "sha256": "6af9768f16ef6bb59f4437fbf04020cc54a64d68e7080f2bcd8b1b154503b25d",
+      "actualBytes": 1048592,
+      "exact": true
+    }
+  ],
+  "exact": true
+}
