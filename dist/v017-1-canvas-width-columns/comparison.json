@@ -1,0 +1,54 @@
+{
+  "version": "V017-1",
+  "status": "unfinalized build",
+  "scope": "V017 published layout versus V017-1 center column matched to canvas",
+  "settings": {
+    "applicationClosurePasses": 2,
+    "closureCompiler": "20261108.0.0",
+    "roadroller": "da0ka community fork at 64614b5fc6c7a97d75315c4d8c9ca407e6f233a3",
+    "roadrollerLevel": 2,
+    "roadrollerExe": 0,
+    "base122": true,
+    "sameInitialRoadrollerOptions": true
+  },
+  "baseline": {
+    "sourceBytes": 99189,
+    "closureBytes": 19186,
+    "pass1Bytes": 19206,
+    "pass2Bytes": 19186,
+    "selectedPass": 2,
+    "roadrollerBytes": 12202,
+    "finalJsBytes": 10827,
+    "finalHtmlBytes": 10862,
+    "searchMs": 25518,
+    "bestSize": 12201,
+    "loaderBytes": 968,
+    "payloadBytes": 9878
+  },
+  "candidate": {
+    "sourceBytes": 99189,
+    "closureBytes": 19186,
+    "pass1Bytes": 19206,
+    "pass2Bytes": 19186,
+    "selectedPass": 2,
+    "roadrollerBytes": 12198,
+    "finalJsBytes": 10824,
+    "finalHtmlBytes": 10859,
+    "searchMs": 25518,
+    "bestSize": 12201,
+    "loaderBytes": 968,
+    "payloadBytes": 9875
+  },
+  "comparison": {
+    "readableSourceBytesDelta": 0,
+    "nesSourceBytesDelta": 0,
+    "closureBytesDelta": 0,
+    "roadrollerBytesDelta": -4,
+    "finalHtmlBytesDelta": -3
+  },
+  "tools": {
+    "node": "v26.13.1",
+    "closure": "20261108.0.0",
+    "roadroller": "da0ka/roadroller 64614b5fc6c7a97d75315c4d8c9ca407e6f233a3 (O2; exe:0)"
+  }
+}
