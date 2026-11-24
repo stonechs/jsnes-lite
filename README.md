@@ -4,19 +4,29 @@ Tiny NES emulator in JS inspired by JSNES (https://github.com/bfirsh/jsnes + htt
 
 Demo: https://xem.github.io/jsnes-lite
 
-## Latest finalized release: V014
+## Latest finalized release: V016
 
-**Standalone emulator: [jsnes-lite.min.html](dist/v014-community-roadroller-o2/jsnes-lite.min.html), 10,879 bytes.** Open it in a browser, choose a local ROM, and use the touch controls or keyboard.
+**Standalone emulator: [jsnes-lite.min.html](dist/v016-lzmad-frame-scheduler/jsnes-lite.min.html), 10,863 bytes.** Open it in a browser, choose a local `.nes` or supported `.7z` ROM, and use the touch controls or keyboard.
 
-V014 uses the community Roadroller O2 build and a compact touch interface. A/B are stacked vertically; the landscape side columns use 26vw and the canvas width uses 107dvh without clamps. It retains V013's emulator and ROM support: `.nes` and single-file LZMA1/LZMA2 `.7z`, Mapper 0–4 and Mapper 30 UNROM-512. ZIP, CRC verification, Mapper 30 self-flash programming, and DMC audio are unsupported. Browser gameplay and physical-phone touch controls were not tested.
+V016 restores the accumulated frame-deadline scheduler from V015-5 and retains LZMA1/LZMA2 archive support and its landscape touch layout. It supports iNES 1.0 Mapper 0–4 and Mapper 30 UNROM-512; ZIP, CRC verification, Mapper 30 self-flash programming, and DMC audio are unsupported. Regression vectors passed; browser gameplay and physical-phone touch controls were not tested.
 
-- [V014 build notes](dist/v014-community-roadroller-o2/README.md)
-- [V014 release notes](dist/v014-community-roadroller-o2/RELEASE_NOTES.md)
-- [V014 byte counts, hashes, and tool versions](dist/v014-community-roadroller-o2/sizes.json)
-- [V014 finalization record](dist/v014-community-roadroller-o2/RELEASED.json)
-- Root `src/` and `interfaces/` are the editable source. V014's build snapshot is archived at `dist/v014-community-roadroller-o2/source/`.
+- [V016 build notes](dist/v016-lzmad-frame-scheduler/README.md)
+- [V016 release notes](dist/v016-lzmad-frame-scheduler/RELEASE_NOTES.md)
+- [V016 byte counts, hashes, and tool versions](dist/v016-lzmad-frame-scheduler/sizes.json)
+- [V016 finalization record](dist/v016-lzmad-frame-scheduler/RELEASED.json)
+- Root `src/` and `interfaces/` are the editable source. V016's build snapshot is archived at `dist/v016-lzmad-frame-scheduler/source/`.
 - [Project guide and source-of-truth rules](PROJECT_GUIDE.md)
 - [Build instructions](build-support/README.md) · [Local development history](build-support/LOCAL-HISTORY.md)
+
+## Previous release: V014
+
+V014 uses the community Roadroller O2 build and a compact touch interface. A/B are stacked vertically; the landscape side columns use 26vw and the canvas width uses 107dvh without clamps. Its standalone HTML is 10,879 bytes.
+
+- [V014 standalone](dist/v014-community-roadroller-o2/jsnes-lite.min.html)
+- [V014 build notes](dist/v014-community-roadroller-o2/README.md)
+- [V014 release notes](dist/v014-community-roadroller-o2/RELEASE_NOTES.md)
+- [V014 byte counts and hashes](dist/v014-community-roadroller-o2/sizes.json)
+- [V014 finalization record](dist/v014-community-roadroller-o2/RELEASED.json)
 
 ## Previous release: V013
 

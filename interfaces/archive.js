@@ -1,69 +1,5 @@
-// Compact LZMA1 raw decoder. Flat SDK probability layout, whole output as dictionary.
-// State-machine layout informed by Ilya Kurdyukov's micro-lzmadec reference.
-// Input: raw range-coded bytes, 5-byte LZMA properties, known output byte count.
-function decodeLzma(packed,properties,size,context){
-  archiveCheck(properties?.length===5&&properties[0]<225,'Prop');archiveCheck(size>=0&&size<=MAX_BLOCK,'Size');
-  var prop=properties[0],lc=prop%9,lp=Math.floor(prop/9)%5,pb=Math.floor(prop/45),
-      dictionary=Math.max(4096,new DataView(properties.buffer,properties.byteOffset,5).getUint32(1,true)),
-      probs=context?.probs||new Uint16Array(1846+768*2**(lc+lp)).fill(1024),out=context?.out||new Uint8Array(size),
-      input=0,pos=context?.pos||0,dictBase=context?.base||0,end=pos+size,range=4294967295,code=0,
-      state=context?.state||0,rep0=context?.rep0||1,rep1=context?.rep1||1,rep2=context?.rep2||1,rep3=context?.rep3||1;
-  function read(){archiveCheck(input<packed.length,'EOF');return packed[input++];}
-  function normalize(){if(range<16777216){range=(range*256)>>>0;code=(code*256+read())>>>0;}}
-  function bit(index){
-    normalize();var p=probs[index],bound=(range>>>11)*p;
-    if(code<bound){range=bound;probs[index]=p+((2048-p)>>>5);return 0;}
-    range=(range-bound)>>>0;code=(code-bound)>>>0;probs[index]=p-(p>>>5);return 1;
-  }
-  function tree(base,bits,reverse){var node=1,value=0;for(var i=0;i<bits;i++){var b=bit(base+node);node=node*2+b;value|=b<<i;}return reverse?value:node-2**bits;}
-  function length(base,position){
-    if(!bit(base))return tree(base+2+position*8,3,false);
-    if(!bit(base+1))return 8+tree(base+130+position*8,3,false);
-    return 16+tree(base+258,8,false);
-  }
-  archiveCheck(read()===0);for(var i=0;i<4;i++)code=(code*256+read())>>>0;
-  while(pos<end){
-    var position=(pos-dictBase)&((1<<pb)-1),len,distance;
-    if(!bit(state*16+position)){
-      var base=1846+768*((((pos-dictBase)&((1<<lp)-1))<<lc)+((pos>dictBase?out[pos-1]:0)>>(8-lc))),node=1,
-          offset=state>=7?256:0,match=offset?out[pos-rep0]:0;
-      while(node<256){match*=2;var b=bit(base+offset+(match&offset)+node);node=node*2+b;offset&=b?match:~match;}
-      out[pos++]=node-256;state=state<4?0:state<10?state-3:state-6;
-      continue;
-    }
-    if(!bit(192+state)){
-      rep3=rep2;rep2=rep1;rep1=rep0;
-      len=length(818,position)+2;
-      var slot=tree(432+Math.min(len-2,3)*64,6,false);
-      distance=slot;
-      if(slot>3){
-        var bits=(slot>>1)-1;distance=(2+(slot&1))*2**bits;
-        if(slot<14)distance+=tree(687+distance-slot,bits,true);
-        else{
-          var direct=0;for(var n=bits-4;n>0;n--){normalize();range>>>=1;var b=code>=range?1:0;if(b)code=(code-range)>>>0;direct=direct*2+b;}
-          distance+=direct*16+tree(802,4,true);
-        }
-      }
-      rep0=distance+1;state=state<7?7:10;
-    }else{
-      if(!bit(204+state)){
-        if(!bit(240+state*16+position)){
-          archiveCheck(rep0<=pos-dictBase&&rep0<=dictionary,'Data');out[pos]=out[pos-rep0];pos++;state=state<7?9:11;continue;
-        }
-      }else{
-        if(!bit(216+state))distance=rep1;
-        else{if(!bit(228+state))distance=rep2;else{distance=rep3;rep3=rep2;}rep2=rep1;}
-        rep1=rep0;rep0=distance;
-      }
-      len=length(1332,position)+2;state=state<7?8:11;
-    }
-    archiveCheck(rep0>0&&rep0<=pos-dictBase&&rep0<=dictionary&&len<=end-pos,'Data');
-    for(;len--;pos++)out[pos]=out[pos-rep0];
-  }
-  if(context){normalize();archiveCheck(input===packed.length&&code===0,'Data');Object.assign(context,{pos,probs,state,rep0,rep1,rep2,rep3});}
-  return out;
-}
-
+function decodeLzma(packed,properties,size,context){archiveCheck(properties?.length===5&&properties[0]<225,'Prop');archiveCheck(packed.length>=5&&packed[0]===0,'Data');var dictionary=Math.max(4096,new DataView(properties.buffer,properties.byteOffset,5).getUint32(1,true)),out=decodeLzmadCore(packed,properties,size,dictionary,context);if(!context)archiveCheck(out.length===size,'Data');return context?out:Uint8Array.from(out);}
+function decodeLzmadCore(packed,properties,size,dictionary,context){var d=properties[0],e=d/9,a,u,c,models=context?.models||[],f=(u,a=0,c)=>{var d=u[a]||(u[a]=1024);c=d*(h>>>11),c=c>n>>>0?(h=c,u[a]+=2048-d>>>5,0):(h-=c,n-=c,u[a]-=d>>>5,1),h>>>24||(h<<=8,n=n<<8|s[i++]);return c},r=(u,a=0,c)=>{var d=1,e=a;for(;a--;)d+=d+f(u,d+c);return d^=1<<e},s=packed,t,v,w=d%9,j=t,l,n,m=1<<e/5,g=1<<e%5,p=context?.pos||0,end=p+size,d=0,a=context?.state||0,b=(context?.rep0||1)-1,v=(context?.rep1||1)-1,t=(context?.rep2||1)-1,j=(context?.rep3||1)-1,l=context&&p>(context.base||0)?context.out[p-1]:0,o=context?.out||[],h=16|g--<<8,i=5-h,k;for(;h--;)f[h]=models[h]||(models[h]=[]),n=n<<8|s[i++];for(;p<end;d=(p-(context?.base||0))&m-1)if(f(f[1],a*16+d)){if(f(f[e=k=0],a))f(f[2],a)?(f(f[3],a)?(f(f[4],a)?(e=j,j=t):e=t,t=v):e=v,v=b,b=e):(k=!f(f[5],a*16+d))&&(a=7>a?9:11),k||(c=f[9],k=f(c)?f(c,1)?16+r(c,8,1):r(c,3,d*16+261)+8:r(c,3,d*16+511),k+=2,a=7>a?8:11);else{c=f[8],k=f(c)?f(c,1)?16+r(c,8,1):r(c,3,d*16+261)+8:r(c,3,d*16+511),k+=2,a=7>a?7:10,j=t,t=v,v=b,b=r(f[7],6,6>k?k-2<<6:192);if(b>3)if(u=b>>>1,c=b,b=(2|b&1)<<--u,d=14>c)for(l=b+31-c;u>e;b+=c<<e++)d+=d+=c=f(f[6],d+l);else{for(;4<u--;)h>>>=1,c=n-h>>>31,n-=h&--c,d+=d+-c,h>>>24||(h<<=8,n=n<<8|s[i++]);for(b+=d<<4,d=1;4>e;b+=c<<e++)d+=d+=c=f(f[6],d);if(b<0){archiveCheck(!context,'Data');return o}}}archiveCheck(b>=0&&b<p-(context?.base||0)&&b<dictionary&&k<=end-p,'Data');for(e=p+~b;k--;)l=o[p++]=o[e++]}else{l=f[16+(l>>>8-w|((p-(context?.base||0))&g)<<w)],d=1;if(7>a)for(;d<256;)d+=d+f(l,d);else{for(e=o[p+~b];d<256;)if(k=e>>>7&1,e<<=1,d+=d+=c=f(l,d|k+1<<8),c^k)for(;d<256;)d+=d+f(l,d)}l=o[p++]=d-256;a-=4>a?a:10>a?3:6}if(context)Object.assign(context,{pos:p,models,state:a,rep0:b+1,rep1:v+1,rep2:t+1,rep3:j+1});return o;}
 // LZMA2 shares the compact LZMA core; only its chunk/reset framing is new.
 function decodeLzma2(packed,properties,size){
   archiveCheck(properties?.length===1&&properties[0]<=40,'Prop');archiveCheck(size>=0&&size<=MAX_BLOCK,'Size');
@@ -81,7 +17,7 @@ function decodeLzma2(packed,properties,size){
       archiveCheck(control>=need,'Data');need=0;
       count=(control&31)*65536+word()+1;var length=word()+1;
       if(control>=192){props[0]=r.readByte();archiveCheck(props[0]<225&&props[0]%9+Math.floor(props[0]/9)%5<=4,'Prop');}
-      if(control>=160){context.probs=null;context.state=0;context.rep0=context.rep1=context.rep2=context.rep3=1;}
+      if(control>=160){context.models=null;context.state=0;context.rep0=context.rep1=context.rep2=context.rep3=1;}
       archiveCheck(count<=size-context.pos,'Data');decodeLzma(r.take(length),props,count,context);
     }
   }

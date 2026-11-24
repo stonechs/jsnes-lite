@@ -1,0 +1,17 @@
+{
+  "version": "V016",
+  "date": "2026-11-24",
+  "status": "finalized-do-not-overwrite",
+  "directory": "dist/v016-lzmad-frame-scheduler",
+  "standalone": {
+    "file": "jsnes-lite.min.html",
+    "bytes": 10863,
+    "sha256": "8353272b52f6dc47bf2f665f593a95bc331ee5ab2d24741c3a502fade00c7139"
+  },
+  "tools": {
+    "node": "v26.13.1",
+    "closure": "20261108.0.0",
+    "roadroller": "da0ka/roadroller 64614b5fc6c7a97d75315c4d8c9ca407e6f233a3 (exe:0; O2)",
+    "base122": "project build-support/packaging/base122.mjs"
+  }
+}
